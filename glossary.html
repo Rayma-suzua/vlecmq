@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глоссарий</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="index.html" class="logo">VL-EC-MQ</a>
+        <nav class="nav">
+            <a href="glossary.html" class="nav-link">Глоссарий</a>
+            <div id="authButtons"></div>
+        </nav>
+    </div>
+</header>
+
+<div class="glossary-layout">
+    <div class="glossary-header">
+        <h1 class="glossary-title">Глоссарий</h1>
+        <input type="text" id="searchInput" class="auth-input glossary-search" placeholder="Поиск термина...">
+    </div>
+
+    <div id="glossaryList" class="glossary-list">
+        <p class="loading-text">Загрузка...</p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
+        authDomain: "vlecmq.firebaseapp.com",
+        projectId: "vlecmq",
+        storageBucket: "vlecmq.firebasestorage.app",
+        messagingSenderId: "730050177884",
+        appId: "1:730050177884:web:d4c7c17614b6aa51c96f99"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
+
+    onAuthStateChanged(auth, (user) => {
+        const authButtons = document.getElementById("authButtons");
+        if (user) {
+            const isAdmin = user.email === ADMIN_EMAIL;
+            authButtons.innerHTML = `
+                ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
+                <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
+            `;
+            document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+                await signOut(auth);
+                window.location.reload();
+            });
+        } else {
+            authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;
+        }
+    });
+
+    const snapshot = await getDocs(query(collection(db, "glossary"), orderBy("word")));
+    let terms = [];
+    snapshot.forEach(d => terms.push({ id: d.id, ...d.data() }));
+
+    function renderTerms(list) {
+        const container = document.getElementById("glossaryList");
+        if (list.length === 0) {
+            container.innerHTML = `<p class="loading-text">Ничего не найдено</p>`;
+            return;
+        }
+
+        // Группировка по первой букве
+        const groups = {};
+        list.forEach(term => {
+            const letter = term.word[0].toUpperCase();
+            if (!groups[letter]) groups[letter] = [];
+            groups[letter].push(term);
+        });
+
+        container.innerHTML = "";
+        Object.keys(groups).sort().forEach(letter => {
+            container.innerHTML += `<div class="glossary-letter">${letter}</div>`;
+            groups[letter].forEach(term => {
+                container.innerHTML += `
+                    <div class="glossary-item" id="term-${term.id}">
+                        <div class="glossary-word">${term.word}</div>
+                        <div class="glossary-short">${term.short}</div>
+                        ${term.full ? `<div class="glossary-full">${term.full}</div>` : ""}
+                    </div>
+                `;
+            });
+        });
+    }
+
+    renderTerms(terms);
+
+    // Поиск
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+        const q = e.target.value.toLowerCase();
+        renderTerms(terms.filter(t =>
+            t.word.toLowerCase().includes(q) ||
+            t.short.toLowerCase().includes(q)
+        ));
+    });
+
+    // Якорь из URL (для перехода с тултипа)
+    const hash = window.location.hash;
+    if (hash) {
+        setTimeout(() => {
+            const el = document.querySelector(hash);
+            if (el) el.scrollIntoView({ behavior: "smooth" });
+        }, 500);
+    }
+</script>
+<footer class="footer">
+    © 2026 Rayma Suzua/Rintarocan (Рэйма Сузуя/Ринтаросан). Все персонажи, миры, текстовые материалы и произведения являются интеллектуальной собственностью автора.<br>
+    Любое копирование или использование без разрешения запрещено.
+</footer>
+</body>
+</html>

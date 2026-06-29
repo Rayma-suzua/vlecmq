@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вселенная</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">VL-EC-MQ</a>
+    <nav class="nav">
+      <a href="glossary.html" class="nav-link">Глоссарий</a>
+      <div id="authButtons"></div>
+    </nav>
+  </div>
+</header>
+
+<!-- ГЕРОЙ ВСЕЛЕННОЙ -->
+<div class="work-hero" id="universeHero">
+  <div class="work-hero-overlay"></div>
+  <div class="work-hero-content">
+    <a href="index.html" class="back-link">← Все вселенные</a>
+    <h1 class="work-hero-title" id="universeTitle">Загрузка...</h1>
+    <p class="work-hero-desc" id="universeDesc"></p>
+  </div>
+</div>
+
+<!-- ВКЛАДКИ -->
+<div class="universe-tabs">
+  <button class="universe-tab active" data-tab="works">Произведения</button>
+  <button class="universe-tab" data-tab="chars">Персонажи</button>
+  <button class="universe-tab" data-tab="laws">Вселенские законы</button>
+</div>
+
+<!-- ПРОИЗВЕДЕНИЯ -->
+<section class="tab-content active" id="tab-works">
+  <div class="works-grid" id="worksGrid">
+    <p class="loading-text">Загрузка...</p>
+  </div>
+</section>
+
+<!-- ПЕРСОНАЖИ -->
+<section class="tab-content" id="tab-chars">
+  <div class="chars-grid" id="charsGrid">
+    <p class="loading-text">Загрузка...</p>
+  </div>
+</section>
+
+<!-- ЗАКОНЫ -->
+<section class="tab-content" id="tab-laws">
+  <div id="lawsContainer">
+    <p class="loading-text">Загрузка...</p>
+  </div>
+</section>
+
+<footer class="footer">
+  © 2026 Rayma Suzua/Rintarocan (Рэйма Сузуя/Ринтаросан). Все персонажи, миры, текстовые материалы и произведения являются интеллектуальной собственностью автора.<br>
+  Любое копирование или использование без разрешения запрещено.
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc,updateDoc, collection, getDocs,deleteDoc,addDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
+    authDomain: "vlecmq.firebaseapp.com",
+    projectId: "vlecmq",
+    storageBucket: "vlecmq.firebasestorage.app",
+    messagingSenderId: "730050177884",
+    appId: "1:730050177884:web:d4c7c17614b6aa51c96f99"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
+
+  let isAdmin = false;
+
+  onAuthStateChanged(auth, (user) => {
+    const authButtons = document.getElementById("authButtons");
+    if (user) {
+      isAdmin = user.email === ADMIN_EMAIL;
+
+      authButtons.innerHTML = `
+                ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
+                <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
+            `;
+      document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.reload();
+      });
+    } else {
+      isAdmin = false; // если не авторизован — точно не админ
+      authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;
+    }
+    loadLaws();
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const universeId = params.get("id");
+  if (!universeId) { window.location.href = "index.html"; }
+
+  // Загрузить вселенную
+  const universeDoc = await getDoc(doc(db, "universes", universeId));
+  if (!universeDoc.exists()) { window.location.href = "index.html"; }
+
+  const universe = universeDoc.data();
+  document.title = universe.title;
+  document.getElementById("universeTitle").textContent = universe.title;
+  document.getElementById("universeDesc").textContent = universe.description || "";
+  if (universe.cover) {
+    document.getElementById("universeHero").style.backgroundImage = `url('${universe.cover}')`;
+  }
+
+  // Загрузить произведения этой вселенной
+  const worksGrid = document.getElementById("worksGrid");
+  const worksSnap = await getDocs(query(
+          collection(db, "works"),
+          where("universeId", "==", universeId),
+          orderBy("order")
+  ));
+
+  if (worksSnap.empty) {
+    worksGrid.innerHTML = `<p class="loading-text">Произведения скоро появятся...</p>`;
+  } else {
+    worksGrid.innerHTML = "";
+    worksSnap.forEach(d => {
+      const w = d.data();
+      worksGrid.innerHTML += `
+                <a href="work.html?id=${d.id}" class="work-card">
+                    <img src="${w.cover || ''}" alt="${w.title}" class="work-cover">
+                    <div class="work-overlay">
+                        <p class="work-desc">${w.description || ''}</p>
+                    </div>
+                    <div class="work-title-bar">${w.title}</div>
+                </a>
+            `;
+    });
+  }
+
+  // Загрузить персонажей вселенной
+  const charsGrid = document.getElementById("charsGrid");
+  const charsSnap = await getDocs(query(
+          collection(db, "characters"),
+          where("universeId", "==", universeId)
+  ));
+
+  if (charsSnap.empty) {
+    charsGrid.innerHTML = `<p class="loading-text">Персонажи скоро появятся...</p>`;
+  } else {
+    charsGrid.innerHTML = "";
+    const chars = [];
+    charsSnap.forEach(d => chars.push({ id: d.id, ...d.data() }));
+    chars.sort((a, b) => a.name.localeCompare(b.name));
+    chars.forEach(c => {
+      charsGrid.innerHTML += `
+            <a href="character.html?id=${c.id}" class="char-card">
+                <div class="char-portrait-wrap">
+                    ${c.portrait ? `<img src="${c.portrait}" class="char-portrait">` : `<div class="char-portrait-empty"></div>`}
+                </div>
+                <div class="char-info">
+                    ${c.code ? `<div class="char-card-code">${c.code}</div>` : ""}
+                    <div class="char-card-name">${c.name}</div>
+                    <div class="char-card-role">${c.role || ""}</div>
+                    <div class="char-card-desc">${c.description || ""}</div>
+                </div>
+            </a>
+        `;
+    });
+  }
+
+  // Переключение вкладок
+  document.querySelectorAll(".universe-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".universe-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById(`tab-${tab.dataset.tab}`).classList.add("active");
+      if (tab.dataset.tab === "laws") loadLaws();
+    });
+  });
+
+  // Загрузка законов
+  let lawsLoaded = false;
+  async function loadLaws() {
+    if (lawsLoaded) return;
+    lawsLoaded = false;
+
+    const container = document.getElementById("lawsContainer");
+    container.innerHTML = "";
+
+    const snapshot = await getDocs(query(collection(db, "laws"), where("universeId", "==", universeId)));
+    const laws = [];
+    snapshot.forEach(d => laws.push({ id: d.id, ...d.data() }));
+    laws.sort((a, b) => (a.number || 0) - (b.number || 0));
+
+    const list = document.createElement("div");
+    list.className = "laws-container";
+
+    laws.forEach(law => {
+      list.appendChild(createLawCard(law));
+    });
+
+    if (isAdmin) {
+      const addBtn = document.createElement("button");
+      addBtn.className = "add-law-btn";
+      addBtn.textContent = "+ Добавить закон";
+      addBtn.addEventListener("click", () => {
+        if (list.querySelector(".law-form")) return;
+        list.insertBefore(createLawForm(null, list), addBtn);
+      });
+      list.appendChild(addBtn);
+    }
+
+    container.appendChild(list);
+    lawsLoaded = true;
+  }
+
+  function createLawCard(law) {
+    const card = document.createElement("div");
+    card.className = "law-card";
+    card.id = `law-${law.id}`;
+    card.innerHTML = `
+        <div class="law-number">ЗАКОН ${law.number || ""}</div>
+        <div class="law-title">${law.title || ""}</div>
+        <div class="law-text">${law.text || ""}</div>
+        ${isAdmin ? `
+            <div class="law-actions">
+                <button class="law-edit-btn">Редактировать</button>
+                <button class="law-delete-btn">Удалить</button>
+            </div>
+        ` : ""}
+    `;
+
+    if (isAdmin) {
+      card.querySelector(".law-edit-btn").addEventListener("click", () => {
+        const form = createLawForm(law, card.parentNode);
+        card.parentNode.insertBefore(form, card);
+        card.style.display = "none";
+      });
+      card.querySelector(".law-delete-btn").addEventListener("click", async () => {
+        if (!confirm("Удалить закон?")) return;
+        await deleteDoc(doc(db, "laws", law.id));
+        card.remove();
+      });
+    }
+    return card;
+  }
+
+  function createLawForm(law, container) {
+    const form = document.createElement("div");
+    form.className = "law-form";
+    form.innerHTML = `
+        <input type="number" class="auth-input" id="lawNumber" placeholder="Номер закона" value="${law?.number || ""}">
+        <input type="text" class="auth-input" id="lawTitle" placeholder="Название закона" value="${law?.title || ""}">
+        <textarea class="auth-input admin-textarea" id="lawText" placeholder="Текст закона">${law?.text || ""}</textarea>
+        <div style="display:flex;gap:8px">
+            <button class="auth-btn" id="saveLawBtn">${law ? "Обновить" : "Сохранить"}</button>
+            <button class="nav-btn logout-btn" id="cancelLawBtn">Отмена</button>
+        </div>
+    `;
+
+    form.querySelector("#cancelLawBtn").addEventListener("click", () => {
+      form.remove();
+      if (law) document.getElementById(`law-${law.id}`).style.display = "block";
+    });
+
+    form.querySelector("#saveLawBtn").addEventListener("click", async () => {
+      const number = parseInt(form.querySelector("#lawNumber").value);
+      const title = form.querySelector("#lawTitle").value.trim();
+      const text = form.querySelector("#lawText").value.trim();
+      if (!title) return;
+
+      if (law) {
+        await updateDoc(doc(db, "laws", law.id), { number, title, text });
+        law.number = number;
+        law.title = title;
+        law.text = text;
+        const oldCard = document.getElementById(`law-${law.id}`);
+        const newCard = createLawCard(law);
+        container.insertBefore(newCard, form);
+        form.remove();
+        oldCard.remove();
+      } else {
+        const newDoc = await addDoc(collection(db, "laws"), {
+          number, title, text, universeId, createdAt: new Date()
+        });
+        const newCard = createLawCard({ id: newDoc.id, number, title, text });
+        container.insertBefore(newCard, form);
+        form.remove();
+      }
+      lawsLoaded = false;
+    });
+
+    return form;
+  }
+
+  // Тройной клик — секретная страница
+  let _clickCount = 0;
+  let _clickTimer = null;
+  document.addEventListener("click", () => {
+    _clickCount++;
+    if (_clickCount === 3) {
+      _clickCount = 0;
+      clearTimeout(_clickTimer);
+      showSecretModal();
+    } else {
+      clearTimeout(_clickTimer);
+      _clickTimer = setTimeout(() => { _clickCount = 0; }, 500);
+    }
+  });
+
+  function showSecretModal() {
+    if (document.getElementById("secretModal")) return;
+    const modal = document.createElement("div");
+    modal.className = "secret-modal";
+    modal.id = "secretModal";
+    modal.innerHTML = `
+        <div class="secret-box">
+            <h2>Введи код доступа</h2>
+            <p>Если знаешь — вводи</p>
+            <input type="text" class="secret-input" id="secretInput" placeholder="••••••••" autocomplete="off">
+            <button class="auth-btn" id="secretSubmit">Войти</button>
+            <p class="secret-error" id="secretErr"></p>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+    document.getElementById("secretInput").focus();
+    document.getElementById("secretInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("secretSubmit").click();
+      if (e.key === "Escape") modal.remove();
+    });
+    document.getElementById("secretSubmit").addEventListener("click", async () => {
+      const code = document.getElementById("secretInput").value.trim();
+      if (!code) return;
+      const snap = await getDocs(query(collection(db, "secret_pages"), where("code", "==", code)));
+      if (snap.empty) {
+        document.getElementById("secretErr").textContent = "Неверный код";
+        return;
+      }
+      window.location.href = `secret.html?code=${code}`;
+    });
+  }
+
+</script>
+</body>
+</html>

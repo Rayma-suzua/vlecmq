@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VL-EC-MQ</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="index.html" class="logo">VL-EC-MQ</a>
+        <nav class="nav">
+            <a href="glossary.html" class="nav-link">Глоссарий</a>
+            <div id="authButtons"></div>
+        </nav>
+    </div>
+</header>
+
+<!-- О СЕБЕ -->
+<section class="about-section">
+    <div class="about-inner">
+        <img src="https://res.cloudinary.com/dnhnxdkmh/image/upload/v1781693336/Снимок_экрана_602822_bsspit.png" alt="Автор" class="about-photo">
+        <div class="about-text">
+            <h1 class="about-title">Привет, я Рэйма</h1>
+            <p class="about-desc">Здесь живут мои миры, персонажи и истории. Каждая вселенная - отдельный мир со своими правилами, существами и легендами. Погружайся.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ВСЕЛЕННЫЕ -->
+<div id="universesContainer"></div>
+
+<footer class="footer">
+    © 2026 Rayma Suzua/Rintarocan (Рэйма Сузуя/Ринтаросан). Все персонажи, миры и произведения являются интеллектуальной собственностью автора.<br>
+    Любое копирование или использование без разрешения запрещено.
+</footer>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
+        authDomain: "vlecmq.firebaseapp.com",
+        projectId: "vlecmq",
+        storageBucket: "vlecmq.firebasestorage.app",
+        messagingSenderId: "730050177884",
+        appId: "1:730050177884:web:d4c7c17614b6aa51c96f99"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
+
+    onAuthStateChanged(auth, (user) => {
+        const authButtons = document.getElementById("authButtons");
+        if (user) {
+            const isAdmin = user.email === ADMIN_EMAIL;
+            authButtons.innerHTML = `
+                ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
+                <span class="nav-username">${user.email}</span>
+                <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
+            `;
+            document.getElementById("logoutBtn").addEventListener("click", async () => {
+                await signOut(auth);
+                window.location.reload();
+            });
+        } else {
+            authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;
+        }
+    });
+
+    // Загрузка вселенных
+    const container = document.getElementById("universesContainer");
+    const snapshot = await getDocs(query(collection(db, "universes"), orderBy("order")));
+
+    if (snapshot.empty) {
+        container.innerHTML = `<p class="loading-text" style="text-align:center;padding:60px">Вселенные скоро появятся...</p>`;
+    } else {
+        snapshot.forEach(d => {
+            const u = d.data();
+            const section = document.createElement("section");
+            section.className = "universe-section";
+            section.dataset.id = d.id;
+            if (u.cover) {
+                section.style.backgroundImage = `url('${u.cover}')`;
+            }
+            section.innerHTML = `
+                <div class="universe-overlay"></div>
+                <div class="universe-content">
+                    <h2 class="universe-title">${u.title}</h2>
+                    <p class="universe-desc">${u.description || ""}</p>
+                    <a href="universe.html?id=${d.id}" class="universe-btn">Исследовать →</a>
+                </div>
+            `;
+            container.appendChild(section);
+        });
+
+        // Parallax
+        window.addEventListener("scroll", () => {
+            document.querySelectorAll(".universe-section").forEach(section => {
+                const rect = section.getBoundingClientRect();
+                const offset = rect.top * 0.4;
+                section.style.backgroundPositionY = `calc(50% + ${offset}px)`;
+            });
+        });
+
+        // Анимация появления при скролле
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("visible");
+                }
+            });
+        }, { threshold: 0.2 });
+
+        document.querySelectorAll(".universe-section").forEach(s => observer.observe(s));
+
+    }
+</script>
+</body>
+</html>

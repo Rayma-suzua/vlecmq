@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="auth-container">
+  <div class="auth-box">
+    <h1 class="auth-title">Вход</h1>
+
+    <div class="auth-tabs">
+      <button class="tab-btn active" id="loginTab">Войти</button>
+      <button class="tab-btn" id="registerTab">Регистрация</button>
+    </div>
+
+    <div id="loginForm">
+      <input type="email" id="loginEmail" class="auth-input" placeholder="Email">
+      <input type="password" id="loginPassword" class="auth-input" placeholder="Пароль">
+      <button class="auth-btn" id="loginBtn">Войти</button>
+    </div>
+
+    <div id="registerForm" style="display:none">
+      <input type="text" id="regName" class="auth-input" placeholder="Имя">
+      <input type="email" id="regEmail" class="auth-input" placeholder="Email">
+      <input type="password" id="regPassword" class="auth-input" placeholder="Пароль">
+      <button class="auth-btn" id="registerBtn">Зарегистрироваться</button>
+    </div>
+
+    <p class="auth-error" id="authError"></p>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
+    authDomain: "vlecmq.firebaseapp.com",
+    projectId: "vlecmq",
+    storageBucket: "vlecmq.firebasestorage.app",
+    messagingSenderId: "730050177884",
+    appId: "1:730050177884:web:d4c7c17614b6aa51c96f99"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Переключение вкладок
+  document.getElementById("loginTab").addEventListener("click", () => {
+    document.getElementById("loginForm").style.display = "block";
+    document.getElementById("registerForm").style.display = "none";
+    document.getElementById("loginTab").classList.add("active");
+    document.getElementById("registerTab").classList.remove("active");
+  });
+
+  document.getElementById("registerTab").addEventListener("click", () => {
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("registerForm").style.display = "block";
+    document.getElementById("registerTab").classList.add("active");
+    document.getElementById("loginTab").classList.remove("active");
+  });
+
+  // Регистрация
+  document.getElementById("registerBtn").addEventListener("click", async () => {
+    const name = document.getElementById("regName").value.trim();
+    const email = document.getElementById("regEmail").value.trim();
+    const password = document.getElementById("regPassword").value;
+    const errorEl = document.getElementById("authError");
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+      try {
+        await setDoc(doc(db, "users", cred.user.uid), {
+          name,
+          email,
+          role: "reader",
+          createdAt: new Date()
+        });
+      } catch (dbError) {
+        console.log("Firestore error:", dbError);
+      }
+
+      errorEl.style.color = "#4caf50";
+      errorEl.textContent = "Аккаунт создан! Переходим...";
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 2000);
+    } catch (e) {
+      errorEl.style.color = "var(--error)";
+      errorEl.textContent = e.message;
+    }
+  });
+
+  // Вход
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    const errorEl = document.getElementById("authError");
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      window.location.href = "index.html";
+    } catch (e) {
+      errorEl.textContent = e.message;
+    }
+  });
+</script>
+<footer class="footer">
+  © 2026 Rayma Suzua/Rintarocan. Все персонажи, миры и произведения являются интеллектуальной собственностью автора.<br>
+  Любое копирование или использование без разрешения запрещено.
+</footer>
+</body>
+</html>

@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админ панель</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">VL-EC-MQ</a>
+    <nav class="nav">
+      <span class="nav-username" id="adminEmail"></span>
+      <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
+    </nav>
+  </div>
+</header>
+
+<div class="admin-layout">
+
+  <!-- САЙДБАР -->
+  <aside class="admin-sidebar">
+    <h3 class="sidebar-title">Панель админа</h3>
+    <button class="sidebar-btn" id="btnUniverses">Вселенные</button>
+    <button class="sidebar-btn active" id="btnWorks">Произведения</button>
+    <button class="sidebar-btn" id="btnNewUniverse">+ Новая вселенная</button>
+    <button class="sidebar-btn" id="btnNewWork">+ Новое произведение</button>
+    <button class="sidebar-btn" id="btnNewPage">+ Новая страница</button>
+    <button class="sidebar-btn" id="btnGlossary">+ Термин в глоссарий</button>
+    <button class="sidebar-btn" id="btnPages">Страницы</button>
+    <button class="sidebar-btn" id="btnCharacters">Персонажи</button>
+    <button class="sidebar-btn" id="btnNewCharacter">+ Новый персонаж</button>
+    <button class="sidebar-btn" id="btnSecrets">Секретные страницы</button>
+    <button class="sidebar-btn" id="btnNewSecret">+ Новая секретная</button>
+  </aside>
+
+  <!-- КОНТЕНТ -->
+  <main class="admin-main">
+
+    <!-- СПИСОК ВСЕЛЕННЫХ -->
+    <div id="sectionUniverses" style="display:none">
+      <h2 class="admin-section-title">Вселенные</h2>
+      <div id="universesList" class="admin-works-list">
+        <p class="loading-text">Загрузка...</p>
+      </div>
+    </div>
+
+    <!-- НОВАЯ ВСЕЛЕННАЯ -->
+    <div id="sectionNewUniverse" style="display:none">
+      <h2 class="admin-section-title">Новая вселенная</h2>
+      <input type="text" id="universeTitle" class="auth-input" placeholder="Название вселенной">
+      <textarea id="universeDesc" class="auth-input admin-textarea" placeholder="Описание вселенной"></textarea>
+      <div class="upload-area">
+        <label class="upload-label">
+          Фоновая картинка
+          <input type="file" id="universeCover" accept="image/*" style="display:none">
+          <span class="upload-btn">Выбрать файл</span>
+        </label>
+        <img id="universeCoverPreview" class="cover-preview" style="display:none">
+      </div>
+      <button class="auth-btn" id="saveUniverseBtn">Сохранить вселенную</button>
+      <p class="auth-error" id="universeError"></p>
+    </div>
+
+
+    <!-- СПИСОК ПРОИЗВЕДЕНИЙ -->
+    <div id="sectionWorks">
+      <h2 class="admin-section-title">Произведения</h2>
+      <div id="worksList" class="admin-works-list">
+        <p class="loading-text">Загрузка...</p>
+      </div>
+    </div>
+
+    <!-- НОВОЕ ПРОИЗВЕДЕНИЕ -->
+    <div id="sectionNewWork" style="display:none">
+      <h2 class="admin-section-title">Новое произведение</h2>
+      <input type="text" id="workTitle" class="auth-input" placeholder="Название">
+      <select id="workUniverse" class="auth-input admin-select">
+        <option value="">— Выбери вселенную —</option>
+      </select>
+      <textarea id="workDesc" class="auth-input admin-textarea" placeholder="Короткое описание (показывается при наведении)"></textarea>
+      <div class="upload-area">
+        <label class="upload-label">
+          Обложка
+          <input type="file" id="workCover" accept="image/*" style="display:none">
+          <span class="upload-btn">Выбрать файл</span>
+        </label>
+        <img id="coverPreview" class="cover-preview" style="display:none">
+      </div>
+      <button class="auth-btn" id="saveWorkBtn">Сохранить произведение</button>
+      <p class="auth-error" id="workError"></p>
+    </div>
+
+    <!-- НОВАЯ СТРАНИЦА -->
+    <div id="sectionNewPage" style="display:none">
+      <h2 class="admin-section-title">Новая страница</h2>
+      <input type="text" id="pageTitle" class="auth-input" placeholder="Заголовок страницы">
+      <select id="pageWork" class="auth-input admin-select">
+        <option value="">— Произведение —</option>
+      </select>
+      <select id="pageCharacter" class="auth-input admin-select">
+        <option value="">— Персонаж —</option>
+      </select>
+      <select id="pageSecret" class="auth-input admin-select">
+        <option value="">— Секретная страница —</option>
+      </select>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Выбери что-то одно</p>
+      <div class="upload-area">
+        <label class="upload-label">
+          Обложка страницы (необязательно)
+          <input type="file" id="pageCover" accept="image/*" style="display:none">
+          <span class="upload-btn">Выбрать файл</span>
+        </label>
+        <img id="pageCoverPreview" class="cover-preview" style="display:none">
+      </div>
+      <div id="editor" class="quill-editor"></div>
+      <button class="auth-btn" id="savePageBtn" style="margin-top:16px">Сохранить страницу</button>
+      <p class="auth-error" id="pageError"></p>
+    </div>
+
+    <!-- СПИСОК СТРАНИЦ -->
+    <div id="sectionPages" style="display:none">
+      <h2 class="admin-section-title">Страницы</h2>
+      <div id="adminPagesList" class="admin-works-list">
+        <p class="loading-text">Загрузка...</p>
+      </div>
+    </div>
+
+    <!-- ТЕРМИНЫ -->
+    <div id="sectionGlossary" style="display:none">
+      <h2 class="admin-section-title">Термины</h2>
+      <div id="glossaryListAdmin" class="admin-works-list" style="margin-bottom:32px"></div>
+
+      <h3 class="admin-section-title" id="termFormTitle" style="font-size:18px">Новый термин</h3>
+      <input type="hidden" id="termEditId">
+      <input type="text" id="termWord" class="auth-input" placeholder="Термин">
+      <input type="text" id="termShort" class="auth-input" placeholder="Короткое описание (для тултипа)">
+      <input type="text" id="termForms" class="auth-input" placeholder="Доп. формы через запятую">
+      <textarea id="termFull" class="auth-input admin-textarea" placeholder="Полное описание (для страницы глоссария)"></textarea>
+      <div style="display:flex;gap:12px">
+        <button class="auth-btn" id="saveTermBtn">Сохранить термин</button>
+        <button class="nav-btn logout-btn" id="cancelTermBtn" style="display:none">Отмена</button>
+      </div>
+      <p class="auth-error" id="termError"></p>
+    </div>
+
+    <!-- СПИСОК ПЕРСОНАЖЕЙ -->
+    <div id="sectionCharacters" style="display:none">
+      <h2 class="admin-section-title">Персонажи</h2>
+      <div id="charactersList" class="admin-works-list">
+        <p class="loading-text">Загрузка...</p>
+      </div>
+    </div>
+
+    <!-- НОВЫЙ ПЕРСОНАЖ -->
+    <div id="sectionNewCharacter" style="display:none">
+      <h2 class="admin-section-title">Новый персонаж</h2>
+      <input type="text" id="charName" class="auth-input" placeholder="Имя персонажа">
+      <input type="text" id="charCode" class="auth-input" placeholder="Код (необязательно, напр. VL-01)">
+      <input type="text" id="charRole" class="auth-input" placeholder="Роль / группа (напр. Верховный Дракон)">
+      <textarea id="charDesc" class="auth-input admin-textarea" placeholder="Короткое описание"></textarea>
+      <select id="charUniverse" class="auth-input admin-select">
+        <option value="">— Выбери вселенную —</option>
+      </select>
+      <div class="upload-area">
+        <label class="upload-label">
+          Портрет
+          <input type="file" id="charPortrait" accept="image/*" style="display:none">
+          <span class="upload-btn">Выбрать файл</span>
+        </label>
+        <img id="charPortraitPreview" class="cover-preview" style="display:none">
+      </div>
+      <button class="auth-btn" id="saveCharacterBtn">Сохранить персонажа</button>
+      <p class="auth-error" id="characterError"></p>
+    </div>
+
+    <!-- СПИСОК СЕКРЕТНЫХ -->
+    <div id="sectionSecrets" style="display:none">
+      <h2 class="admin-section-title">Секретные страницы</h2>
+      <div id="secretsList" class="admin-works-list">
+        <p class="loading-text">Загрузка...</p>
+      </div>
+    </div>
+
+    <!-- НОВАЯ СЕКРЕТНАЯ -->
+    <div id="sectionNewSecret" style="display:none">
+      <h2 class="admin-section-title">Новая секретная страница</h2>
+      <input type="text" id="secretTitle" class="auth-input" placeholder="Название (только для админа)">
+      <input type="text" id="secretCode" class="auth-input" placeholder="Код доступа (то что вводит пользователь)">
+      <div class="upload-area">
+        <label class="upload-label">
+          Обложка (необязательно)
+          <input type="file" id="secretCover" accept="image/*" style="display:none">
+          <span class="upload-btn">Выбрать файл</span>
+        </label>
+        <img id="secretCoverPreview" class="cover-preview" style="display:none">
+      </div>
+      <div id="secretEditor" class="quill-editor"></div>
+      <button class="auth-btn" id="saveSecretBtn" style="margin-top:16px">Сохранить</button>
+      <p class="auth-error" id="secretError"></p>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
+    authDomain: "vlecmq.firebaseapp.com",
+    projectId: "vlecmq",
+    storageBucket: "vlecmq.firebasestorage.app",
+    messagingSenderId: "730050177884",
+    appId: "1:730050177884:web:d4c7c17614b6aa51c96f99"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
+
+  function colorizeCode(code) {
+    if (!code) return "";
+    const errWords = ["ERR", "DEL", "DEAD"];
+    const actWords = ["ACT"];
+    const idleWords = ["IDLE", "INACT"];
+
+    // Заменяем только целые токены разделённые точками и дефисами
+    return code.split(".").map(segment => {
+      const upper = segment.toUpperCase();
+      if (errWords.includes(upper)) return `<span class="code-err">${segment}</span>`;
+      if (actWords.includes(upper)) return `<span class="code-act">${segment}</span>`;
+      if (idleWords.includes(upper)) return `<span class="code-idle">${segment}</span>`;
+      return segment;
+    }).join(".");
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (!user || user.email !== ADMIN_EMAIL) {
+      window.location.href = "index.html";
+      return;
+    }
+    document.getElementById("adminEmail").textContent = user.email;
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "index.html";
+  });
+
+  const quill = new Quill("#editor", {
+    theme: "snow",
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ color: [] }, { background: [] }],
+        [{ align: [] }],
+        ["blockquote"],
+        ["image", "link"],
+        ["clean"]
+      ]
+    },
+    placeholder: "Пиши содержимое страницы здесь..."
+  });
+
+  const secretQuill = new Quill("#secretEditor", {
+    theme: "snow",
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ color: [] }, { background: [] }],
+        [{ align: [] }],
+        ["blockquote"],
+        ["image", "link"],
+        ["clean"]
+      ]
+    },
+    placeholder: "Содержимое секретной страницы..."
+  });
+
+  secretQuill.getModule("toolbar").addHandler("image", () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.click();
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const url = await uploadFile(file);
+      const range = secretQuill.getSelection();
+      secretQuill.insertEmbed(range.index, "image", url);
+    };
+  });
+
+  quill.getModule("toolbar").addHandler("image", () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.click();
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const url = await uploadFile(file);
+      const range = quill.getSelection();
+      quill.insertEmbed(range.index, "image", url);
+    };
+  });
+
+  async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "sititit");
+    const res = await fetch("https://api.cloudinary.com/v1_1/dnhnxdkmh/image/upload", {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
+    return data.secure_url;
+  }
+
+  async function loadUniversesSelect() {
+    const select = document.getElementById("workUniverse");
+    select.innerHTML = `<option value="">— Выбери вселенную —</option>`;
+    const snapshot = await getDocs(query(collection(db, "universes"), orderBy("order")));
+    snapshot.forEach(d => {
+      select.innerHTML += `<option value="${d.id}">${d.data().title}</option>`;
+    });
+  }
+
+  async function loadCharactersUniverseSelect() {
+    const select = document.getElementById("charUniverse");
+    select.innerHTML = `<option value="">— Выбери вселенную —</option>`;
+    const snapshot = await getDocs(query(collection(db, "universes"), orderBy("order")));
+    snapshot.forEach(d => {
+      select.innerHTML += `<option value="${d.id}">${d.data().title}</option>`;
+    });
+  }
+
+  async function loadWorksSelect() {
+    const select = document.getElementById("pageWork");
+    select.innerHTML = `<option value="">— Выбери произведение —</option>`;
+    const snapshot = await getDocs(collection(db, "works"));
+    snapshot.forEach(d => {
+      select.innerHTML += `<option value="${d.id}">${d.data().title}</option>`;
+    });
+  }
+
+  async function loadCharactersSelect() {
+    const select = document.getElementById("pageCharacter");
+    select.innerHTML = `<option value="">— Персонаж —</option>`;
+    const snapshot = await getDocs(collection(db, "characters"));
+    const chars = [];
+    snapshot.forEach(d => chars.push({ id: d.id, ...d.data() }));
+    chars.sort((a, b) => a.name.localeCompare(b.name));
+    chars.forEach(c => {
+      select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+    });
+  }
+
+  async function loadSecretsSelect() {
+    const select = document.getElementById("pageSecret");
+    select.innerHTML = `<option value="">— Секретная страница —</option>`;
+    const snapshot = await getDocs(collection(db, "secret_pages"));
+    snapshot.forEach(d => {
+      select.innerHTML += `<option value="${d.id}">${d.data().title}</option>`;
+    });
+  }
+
+
+  async function loadUniversesList() {
+    const list = document.getElementById("universesList");
+    list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
+    const snapshot = await getDocs(query(collection(db, "universes"), orderBy("order")));
+    if (snapshot.empty) {
+      list.innerHTML = `<p class="loading-text">Вселенных пока нет</p>`;
+      return;
+    }
+    list.innerHTML = "";
+    snapshot.forEach(d => {
+      const u = d.data();
+      list.innerHTML += `
+            <div class="admin-work-item draggable" id="universe-${d.id}" data-id="${d.id}" draggable="true">
+                <div class="drag-handle">⠿</div>
+                ${u.cover ? `<img src="${u.cover}" class="admin-work-thumb">` : '<div class="admin-work-thumb-empty"></div>'}
+                <div style="flex:1">
+                    <div class="admin-work-name">${u.title}</div>
+                    <div class="admin-work-desc">${u.description || '—'}</div>
+                </div>
+                <button class="delete-btn delete-universe-btn" data-id="${d.id}">Удалить</button>
+            </div>
+        `;
+    });
+    document.querySelectorAll(".delete-universe-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (!confirm("Удалить вселенную?")) return;
+        await deleteDoc(doc(db, "universes", id));
+        document.getElementById(`universe-${id}`).remove();
+      });
+    });
+    let dragEl = null;
+    list.querySelectorAll(".draggable").forEach(item => {
+      item.addEventListener("dragstart", () => {
+        dragEl = item;
+        setTimeout(() => item.classList.add("dragging"), 0);
+      });
+      item.addEventListener("dragend", async () => {
+        item.classList.remove("dragging");
+        const items = list.querySelectorAll(".draggable");
+        const updates = [];
+        items.forEach((el, index) => updates.push(updateDoc(doc(db, "universes", el.dataset.id), { order: index + 1 })));
+        await Promise.all(updates);
+      });
+      item.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (item === dragEl) return;
+        const rect = item.getBoundingClientRect();
+        if (e.clientY < rect.top + rect.height / 2) list.insertBefore(dragEl, item);
+        else list.insertBefore(dragEl, item.nextSibling);
+      });
+    });
+  }
+
+  async function loadWorksList() {
+    const list = document.getElementById("worksList");
+    list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
+    const snapshot = await getDocs(query(collection(db, "works"), orderBy("order")));
+    if (snapshot.empty) {
+      list.innerHTML = `<p class="loading-text">Произведений пока нет</p>`;
+      return;
+    }
+    list.innerHTML = "";
+    snapshot.forEach(d => {
+      const w = d.data();
+      list.innerHTML += `
+            <div class="admin-work-item draggable" id="work-${d.id}" data-id="${d.id}" draggable="true">
+                <div class="drag-handle">⠿</div>
+                ${w.cover ? `<img src="${w.cover}" class="admin-work-thumb">` : '<div class="admin-work-thumb-empty"></div>'}
+                <div style="flex:1">
+                    <div class="admin-work-name">${w.title}</div>
+                    <div class="admin-work-desc">${w.description || '—'}</div>
+                </div>
+                <button class="delete-btn delete-work-btn" data-id="${d.id}">Удалить</button>
+            </div>
+        `;
+    });
+    document.querySelectorAll(".delete-work-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (!confirm("Удалить это произведение?")) return;
+        await deleteDoc(doc(db, "works", id));
+        document.getElementById(`work-${id}`).remove();
+      });
+    });
+    let dragEl = null;
+    list.querySelectorAll(".draggable").forEach(item => {
+      item.addEventListener("dragstart", () => {
+        dragEl = item;
+        setTimeout(() => item.classList.add("dragging"), 0);
+      });
+      item.addEventListener("dragend", async () => {
+        item.classList.remove("dragging");
+        const items = list.querySelectorAll(".draggable");
+        const updates = [];
+        items.forEach((el, index) => updates.push(updateDoc(doc(db, "works", el.dataset.id), { order: index + 1 })));
+        await Promise.all(updates);
+      });
+      item.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (item === dragEl) return;
+        const rect = item.getBoundingClientRect();
+        if (e.clientY < rect.top + rect.height / 2) list.insertBefore(dragEl, item);
+        else list.insertBefore(dragEl, item.nextSibling);
+      });
+    });
+  }
+
+  async function loadAdminPagesList() {
+    const list = document.getElementById("adminPagesList");
+    list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
+    const snapshot = await getDocs(collection(db, "pages"));
+    if (snapshot.empty) {
+      list.innerHTML = `<p class="loading-text">Страниц пока нет</p>`;
+      return;
+    }
+    list.innerHTML = "";
+    const pages = [];
+    snapshot.forEach(d => pages.push({ id: d.id, ...d.data() }));
+    pages.sort((a, b) => a.createdAt?.seconds - b.createdAt?.seconds);
+    pages.forEach(page => {
+      list.innerHTML += `
+            <div class="admin-work-item" id="page-${page.id}">
+                <div style="flex:1">
+                    <div class="admin-work-name">${page.title}</div>
+                </div>
+                <button class="edit-page-btn nav-btn" data-id="${page.id}">Редактировать</button>
+                <button class="delete-btn delete-page-btn" data-id="${page.id}">Удалить</button>
+            </div>
+        `;
+    });
+    document.querySelectorAll(".delete-page-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (!confirm("Удалить эту страницу?")) return;
+        await deleteDoc(doc(db, "pages", id));
+        document.getElementById(`page-${id}`).remove();
+      });
+    });
+    document.querySelectorAll(".edit-page-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await openEditPage(btn.getAttribute("data-id"));
+      });
+    });
+  }
+
+  async function openEditPage(pageId) {
+    const pageDoc = await getDoc(doc(db, "pages", pageId));
+    if (!pageDoc.exists()) return;
+    const page = pageDoc.data();
+    Object.values(sections).forEach(s => document.getElementById(s).style.display = "none");
+    document.querySelectorAll(".sidebar-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById("sectionNewPage").style.display = "block";
+    document.getElementById("pageTitle").value = page.title;
+    quill.root.innerHTML = page.content || "";
+    await loadWorksSelect();
+    document.getElementById("pageWork").value = page.workId || "";
+    const saveBtn = document.getElementById("savePageBtn");
+    saveBtn.textContent = "Обновить страницу";
+    saveBtn.dataset.editId = pageId;
+  }
+
+  async function loadCharactersList() {
+    const list = document.getElementById("charactersList");
+    list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
+    const snapshot = await getDocs(collection(db, "characters"));
+    if (snapshot.empty) {
+      list.innerHTML = `<p class="loading-text">Персонажей пока нет</p>`;
+      return;
+    }
+    list.innerHTML = "";
+    const chars = [];
+    snapshot.forEach(d => chars.push({ id: d.id, ...d.data() }));
+    chars.sort((a, b) => a.name.localeCompare(b.name));
+    chars.forEach(char => {
+      list.innerHTML += `
+            <div class="admin-work-item" id="char-${char.id}">
+                ${char.portrait ? `<img src="${char.portrait}" class="admin-work-thumb" style="border-radius:50%">` : '<div class="admin-work-thumb-empty"></div>'}
+                <div style="flex:1">
+                    <div class="admin-work-name">${char.name} ${char.code ? `<span style="font-size:12px">${colorizeCode(char.code)}</span>` : ""}</div>
+                    <div class="admin-work-desc">${char.role || "—"}</div>
+                </div>
+                <button class="delete-btn delete-char-btn" data-id="${char.id}">Удалить</button>
+            </div>
+        `;
+    });
+    document.querySelectorAll(".delete-char-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (!confirm("Удалить персонажа?")) return;
+        await deleteDoc(doc(db, "characters", id));
+        document.getElementById(`char-${id}`).remove();
+      });
+    });
+  }
+
+  async function loadGlossaryAdmin() {
+    const list = document.getElementById("glossaryListAdmin");
+    if (!list) return;
+    list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
+    const snapshot = await getDocs(collection(db, "glossary"));
+    if (snapshot.empty) {
+      list.innerHTML = `<p class="loading-text">Терминов пока нет</p>`;
+      return;
+    }
+    list.innerHTML = "";
+    const terms = [];
+    snapshot.forEach(d => terms.push({id: d.id, ...d.data()}));
+    terms.sort((a, b) => a.word.localeCompare(b.word));
+    terms.forEach(term => {
+      list.innerHTML += `
+            <div class="admin-work-item" id="term-admin-${term.id}">
+                <div style="flex:1">
+                    <div class="admin-work-name">${term.word}</div>
+                    <div class="admin-work-desc">${term.short}</div>
+                </div>
+                <button class="edit-page-btn nav-btn" data-id="${term.id}">Редактировать</button>
+                <button class="delete-btn delete-term-btn" data-id="${term.id}">Удалить</button>
+            </div>
+        `;
+    });
+    list.querySelectorAll(".edit-page-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        const termDoc = await getDoc(doc(db, "glossary", id));
+        if (!termDoc.exists()) return;
+        const term = termDoc.data();
+        document.getElementById("termEditId").value = id;
+        document.getElementById("termWord").value = term.word || "";
+        document.getElementById("termShort").value = term.short || "";
+        document.getElementById("termForms").value = (term.forms || []).join(", ");
+        document.getElementById("termFull").value = term.full || "";
+        document.getElementById("termFormTitle").textContent = "Редактировать термин";
+        document.getElementById("saveTermBtn").textContent = "Обновить термин";
+        document.getElementById("cancelTermBtn").style.display = "inline-block";
+        document.getElementById("termWord").scrollIntoView({behavior: "smooth"});
+      });
+    });
+    list.querySelectorAll(".delete-term-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (!confirm("Удалить термин?")) return;
+        await deleteDoc(doc(db, "glossary", id));
+        document.getElementById(`term-admin-${id}`).remove();
+      });
+    });
+  }
+  const sections = {
+    btnUniverses: "sectionUniverses",
+    btnWorks: "sectionWorks",
+    btnNewUniverse: "sectionNewUniverse",
+    btnNewWork: "sectionNewWork",
+    btnNewPage: "sectionNewPage",
+    btnPages: "sectionPages",
+    btnCharacters: "sectionCharacters",
+    btnNewCharacter: "sectionNewCharacter",
+    btnGlossary: "sectionGlossary",
+    btnSecrets: "sectionSecrets",
+    btnNewSecret: "sectionNewSecret",
+  };
+
+  Object.keys(sections).forEach(btnId => {
+    document.getElementById(btnId).addEventListener("click", () => {
+      Object.values(sections).forEach(s => document.getElementById(s).style.display = "none");
+      document.querySelectorAll(".sidebar-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById(sections[btnId]).style.display = "block";
+      document.getElementById(btnId).classList.add("active");
+      if (btnId === "btnUniverses") loadUniversesList();
+      if (btnId === "btnNewWork") loadUniversesSelect();
+      if (btnId === "btnNewPage") { loadWorksSelect(); loadCharactersSelect(); loadSecretsSelect(); }
+      if (btnId === "btnWorks") loadWorksList();
+      if (btnId === "btnPages") loadAdminPagesList();
+      if (btnId === "btnGlossary") loadGlossaryAdmin();
+      if (btnId === "btnCharacters") loadCharactersList();
+      if (btnId === "btnNewCharacter") loadCharactersUniverseSelect();
+      if (btnId === "btnSecrets") loadSecretsList();
+    });
+  });
+
+  document.getElementById("workCover").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const preview = document.getElementById("coverPreview");
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    }
+  });
+
+  document.getElementById("pageCover").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const preview = document.getElementById("pageCoverPreview");
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    }
+  });
+
+  document.getElementById("universeCover").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const preview = document.getElementById("universeCoverPreview");
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    }
+  });
+
+  document.getElementById("charPortrait").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const preview = document.getElementById("charPortraitPreview");
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    }
+  });
+
+  document.getElementById("secretCover").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const preview = document.getElementById("secretCoverPreview");
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    }
+  });
+
+  document.querySelectorAll(".upload-label").forEach(label => {
+    label.querySelector(".upload-btn").addEventListener("click", () => {
+      label.querySelector("input[type=file]").click();
+    });
+  });
+
+  document.getElementById("saveWorkBtn").addEventListener("click", async () => {
+    const title = document.getElementById("workTitle").value.trim();
+    const desc = document.getElementById("workDesc").value.trim();
+    const coverFile = document.getElementById("workCover").files[0];
+    const errorEl = document.getElementById("workError");
+    if (!title) { errorEl.textContent = "Введи название"; return; }
+    try {
+      errorEl.style.color = "var(--text-muted)";
+      errorEl.textContent = "Сохраняем...";
+      let coverUrl = "";
+      if (coverFile) coverUrl = await uploadFile(coverFile);
+      const snapshot = await getDocs(collection(db, "works"));
+      let maxOrder = 0;
+      snapshot.forEach(d => { const o = d.data().order || 0; if (o > maxOrder) maxOrder = o; });
+      const universeId = document.getElementById("workUniverse").value;
+      await addDoc(collection(db, "works"), {
+        title, description: desc, cover: coverUrl,
+        universeId: universeId || "",
+        order: maxOrder + 1,
+        createdAt: serverTimestamp()
+      });
+      errorEl.style.color = "#4caf50";
+      errorEl.textContent = "Произведение сохранено!";
+      document.getElementById("workTitle").value = "";
+      document.getElementById("workDesc").value = "";
+      document.getElementById("workCover").value = "";
+      document.getElementById("coverPreview").style.display = "none";
+    } catch (e) {
+      errorEl.style.color = "var(--error)";
+      errorEl.textContent = e.message;
+    }
+  });
+
+  document.getElementById("saveUniverseBtn").addEventListener("click", async () => {
+    const title = document.getElementById("universeTitle").value.trim();
+    const desc = document.getElementById("universeDesc").value.trim();
+    const coverFile = document.getElementById("universeCover").files[0];
+    const errorEl = document.getElementById("universeError");
+    if (!title) { errorEl.textContent = "Введи название"; return; }
+    try {
+      errorEl.style.color = "var(--text-muted)";
+      errorEl.textContent = "Сохраняем...";
+      let coverUrl = "";
+      if (coverFile) coverUrl = await uploadFile(coverFile);
+      const snapshot = await getDocs(collection(db, "universes"));
+      let maxOrder = 0;
+      snapshot.forEach(d => { const o = d.data().order || 0; if (o > maxOrder) maxOrder = o; });
+      await addDoc(collection(db, "universes"), {
+        title, description: desc, cover: coverUrl,
+        order: maxOrder + 1,
+        createdAt: serverTimestamp()
+      });
+      errorEl.style.color = "#4caf50";
+      errorEl.textContent = "Вселенная сохранена!";
+      document.getElementById("universeTitle").value = "";
+      document.getElementById("universeDesc").value = "";
+      document.getElementById("universeCover").value = "";
+      document.getElementById("universeCoverPreview").style.display = "none";
+    } catch (e) {
+      errorEl.style.color = "var(--error)";
+      errorEl.textContent = e.message;
+    }
+  });
+
+  document.getElementById("savePageBtn").addEventListener("click", async () => {
+    const title = document.getElementById("pageTitle").value.trim();
+    const workId = document.getElementById("pageWork").value;
+    const characterId = document.getElementById("pageCharacter").value;
+    const secretId = document.getElementById("pageSecret").value;
+    const content = quill.root.innerHTML;
+    const coverFile = document.getElementById("pageCover").files[0];
+    const errorEl = document.getElementById("pageError");
+    const saveBtn = document.getElementById("savePageBtn");
+    const editId = saveBtn.dataset.editId;
+
+    if (!title) { errorEl.textContent = "Введи заголовок"; return; }
+    if (!workId && !characterId && !secretId) { errorEl.textContent = "Выбери произведение, персонажа или секретную страницу"; return; }
+
+    try {
+      errorEl.style.color = "var(--text-muted)";
+      errorEl.textContent = "Сохраняем...";
+      let coverUrl = "";
+      if (coverFile) coverUrl = await uploadFile(coverFile);
+
+      const pageData = { title, content, cover: coverUrl };
+      if (workId) pageData.workId = workId;
+      if (characterId) pageData.characterId = characterId;
+      if (secretId) pageData.secretId = secretId;
+
+      if (editId) {
+        const updateData = { title, content };
+        if (workId) updateData.workId = workId;
+        if (characterId) updateData.characterId = characterId;
+        if (secretId) updateData.secretId = secretId;
+        if (coverUrl) updateData.cover = coverUrl;
+        await updateDoc(doc(db, "pages", editId), updateData);
+        errorEl.style.color = "#4caf50";
+        errorEl.textContent = "Страница обновлена!";
+        saveBtn.textContent = "Сохранить страницу";
+        delete saveBtn.dataset.editId;
+      } else {
+        await addDoc(collection(db, "pages"), { ...pageData, createdAt: serverTimestamp() });
+        errorEl.style.color = "#4caf50";
+        errorEl.textContent = "Страница сохранена!";
+      }
+      document.getElementById("pageTitle").value = "";
+      quill.root.innerHTML = "";
+    } catch (e) {
+      errorEl.style.color = "var(--error)";
+      errorEl.textContent = e.message;
+    }
+  });
+
+  document.getElementById("saveCharacterBtn").addEventListener("click", async () => {
+    const charName = document.getElementById("charName").value.trim();
+    const charCode = document.getElementById("charCode").value.trim();
+    const charRole = document.getElementById("charRole").value.trim();
+    const charDesc = document.getElementById("charDesc").value.trim();
+    const universeId = document.getElementById("charUniverse").value;
+    const portraitFile = document.getElementById("charPortrait").files[0];
+    const errorEl = document.getElementById("characterError");
+    if (!charName) { errorEl.textContent = "Введи имя"; return; }
+    if (!universeId) { errorEl.textContent = "Выбери вселенную"; return; }
+    try {
+      errorEl.style.color = "var(--text-muted)";
+      errorEl.textContent = "Сохраняем...";
+      let portraitUrl = "";
+      if (portraitFile) portraitUrl = await uploadFile(portraitFile);
+      await addDoc(collection(db, "characters"), {
+        name: charName, code: charCode, role: charRole, description: charDesc,
+        universeId, portrait: portraitUrl,
+        createdAt: serverTimestamp()
+      });
+      errorEl.style.color = "#4caf50";
+      errorEl.textContent = "Персонаж сохранён!";
+      document.getElementById("charName").value = "";
+      document.getElementById("charCode").value = "";
+      document.getElementById("charRole").value = "";
+      document.getElementById("charDesc").value = "";
+      document.getElementById("charUniverse").value = "";
+      document.getElementById("charPortrait").value = "";
+      document.getElementById("charPortraitPreview").style.display = "none";
+    } catch (e) {
+      errorEl.style.color = "var(--error)";
+      errorEl.textContent = e.message;
+    }
+  });
+
+  function resetTermForm() {
+    document.getElementById("termEditId").value = "";
+    document.getElementById("termWord").value = "";
+    document.getElementById("termShort").value = "";
+    document.getElementById("termForms").value = "";
+    document.getElementById("termFull").value = "";
+    document.getElementById("termFormTitle").textContent = "Новый термин";
+    document.getElementById("saveTermBtn").textContent = "Сохранить термин";
+    document.getElementById("cancelTermBtn").style.display = "none";
+    document.getElementById("termError").textContent = "";
+  }
+
+  document.getElementById("cancelTermBtn").addEventListener("click", resetTermForm);
+
+  document.getElementById("saveTermBtn").addEventListener("click", async () => {
+    const word = document.getElementById("termWord").value.trim();
+    const short = document.getElementById("termShort").value.trim();
+    const full = document.getElementById("termFull").value.trim();
+    const forms = document.getElementById("termForms").value.trim();
+    const editId = document.getElementById("termEditId").value;
+    const errorEl = document.getElementById("termError");
+    if (!word || !short) { errorEl.textContent = "Заполни термин и короткое описание"; return; }
+    const extraForms = forms ? forms.split(",").map(f => f.trim()).filter(Boolean) : [];
+    try {
+      if (editId) {
+        await updateDoc(doc(db, "glossary", editId), { word, short, full, forms: extraForms });
+        errorEl.style.color = "#4caf50";
+        errorEl.textContent = "Термин обновлён!";
+      } else {
+        await addDoc(collection(db, "glossary"), { word, short, full, forms: extraForms, createdAt: serverTimestamp() });
+        errorEl.style.color = "#4caf50";
+        errorEl.textContent = "Термин сохранён!";
+      }
+      resetTermForm();
+      await loadGlossaryAdmin();
+    } catch (e) {
+      errorEl.style.color = "var(--error)";
+      errorEl.textContent = e.message;
+    }
+  });
+
+  async function loadSecretsList() {
+    const list = document.getElementById("secretsList");
+    list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
+    const snapshot = await getDocs(collection(db, "secret_pages"));
+    if (snapshot.empty) {
+      list.innerHTML = `<p class="loading-text">Секретных страниц пока нет</p>`;
+      return;
+    }
+    list.innerHTML = "";
+    snapshot.forEach(d => {
+      const s = d.data();
+      list.innerHTML += `
+            <div class="admin-work-item" id="secret-${d.id}">
+                <div style="flex:1">
+                    <div class="admin-work-name">${s.title}</div>
+                    <div class="admin-work-desc">Код: <span style="color:var(--accent)">${s.code}</span></div>
+                </div>
+                <a href="secret.html?code=${s.code}" target="_blank" class="nav-btn" style="margin-right:8px">Открыть</a>
+                <button class="edit-secret-btn nav-btn" data-id="${d.id}" style="margin-right:8px">Редактировать</button>
+                <button class="delete-btn delete-secret-btn" data-id="${d.id}">Удалить</button>
+            </div>
+        `;
+    });
+    document.querySelectorAll(".delete-secret-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (!confirm("Удалить секретную страницу?")) return;
+        await deleteDoc(doc(db, "secret_pages", id));
+        document.getElementById(`secret-${id}`).remove();
+      });
+    });
+    document.querySelectorAll(".edit-secret-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        const secretDoc = await getDoc(doc(db, "secret_pages", id));
+        if (!secretDoc.exists()) return;
+        const s = secretDoc.data();
+        Object.values(sections).forEach(sec => document.getElementById(sec).style.display = "none");
+        document.querySelectorAll(".sidebar-btn").forEach(b => b.classList.remove("active"));
+        document.getElementById("sectionNewSecret").style.display = "block";
+        document.getElementById("secretTitle").value = s.title || "";
+        document.getElementById("secretCode").value = s.code || "";
+        secretQuill.root.innerHTML = s.content || "";
+        const saveBtn = document.getElementById("saveSecretBtn");
+        saveBtn.textContent = "Обновить";
+        saveBtn.dataset.editId = id;
+      });
+    });
+  }
+
+    document.querySelectorAll(".delete-secret-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (!confirm("Удалить секретную страницу?")) return;
+        await deleteDoc(doc(db, "secret_pages", id));
+        document.getElementById(`secret-${id}`).remove();
+      });
+    });
+
+  document.getElementById("saveSecretBtn").addEventListener("click", async () => {
+    const title = document.getElementById("secretTitle").value.trim();
+    const code = document.getElementById("secretCode").value.trim();
+    const content = secretQuill.root.innerHTML;
+    const coverFile = document.getElementById("secretCover").files[0];
+    const errorEl = document.getElementById("secretError");
+    const saveBtn = document.getElementById("saveSecretBtn");
+    const editId = saveBtn.dataset.editId;
+
+    if (!title || !code) { errorEl.textContent = "Заполни название и код"; return; }
+
+    try {
+      errorEl.style.color = "var(--text-muted)";
+      errorEl.textContent = "Сохраняем...";
+      let coverUrl = "";
+      if (coverFile) coverUrl = await uploadFile(coverFile);
+
+      if (editId) {
+        const updateData = { title, code, content };
+        if (coverUrl) updateData.cover = coverUrl;
+        await updateDoc(doc(db, "secret_pages", editId), updateData);
+        errorEl.style.color = "#4caf50";
+        errorEl.textContent = "Обновлено!";
+        saveBtn.textContent = "Сохранить";
+        delete saveBtn.dataset.editId;
+      } else {
+        await addDoc(collection(db, "secret_pages"), {
+          title, code, content, cover: coverUrl,
+          createdAt: serverTimestamp()
+        });
+        errorEl.style.color = "#4caf50";
+        errorEl.textContent = "Секретная страница создана!";
+      }
+      document.getElementById("secretTitle").value = "";
+      document.getElementById("secretCode").value = "";
+      document.getElementById("secretCover").value = "";
+      document.getElementById("secretCoverPreview").style.display = "none";
+      secretQuill.root.innerHTML = "";
+      await loadSecretsList();
+    } catch (e) {
+      errorEl.style.color = "var(--error)";
+      errorEl.textContent = e.message;
+    }
+  });
+
+  loadWorksList();
+</script>
+<footer class="footer">
+  © 2026 Rayma Suzua/Rintarocan (Рэйма Сузуя/Ринтаросан). Все персонажи, миры, текстовые материалы и произведения являются интеллектуальной собственностью автора.<br>
+  Любое копирование или использование без разрешения запрещено.
+</footer>
+</body>
+</html>
