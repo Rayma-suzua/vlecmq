@@ -46,11 +46,27 @@
     Любое копирование или использование без разрешения запрещено.
 </footer>
 
+<!-- КОММЕНТАРИИ -->
+<section class="comments-section">
+    <div class="comments-inner">
+        <h2 class="comments-title">Комментарии</h2>
+        <div id="commentsList" class="comments-list"></div>
+        <div id="commentForm" style="display:none">
+            <textarea id="commentText" class="auth-input admin-textarea" placeholder="Написать комментарий..."></textarea>
+            <button class="auth-btn" id="sendCommentBtn">Отправить</button>
+        </div>
+        <p id="commentLoginMsg" class="loading-text" style="display:none">
+            <a href="login.html" style="color:var(--accent)">Войдите</a> чтобы оставить комментарий
+        </p>
+    </div>
+</section>
+
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, addDoc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, addDoc, deleteDoc, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
     const firebaseConfig = {
         apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
         authDomain: "vlecmq.firebaseapp.com",
@@ -97,23 +113,6 @@
         }).join(".");
     }
 
-    onAuthStateChanged(auth, (user) => {
-        const authButtons = document.getElementById("authButtons");
-        if (user) {
-            isAdmin = user.email === ADMIN_EMAIL;
-            authButtons.innerHTML = `
-                ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
-                <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
-            `;
-            document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-                await signOut(auth);
-                window.location.reload();
-            });
-        } else {
-            authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;
-        }
-    });
-
     const params = new URLSearchParams(window.location.search);
     const charId = params.get("id");
     if (!charId) { window.location.href = "index.html"; }
@@ -133,6 +132,11 @@
     const pagesQuery = query(collection(db, "pages"), where("characterId", "==", charId));
     const pagesSnap = await getDocs(pagesQuery);
     const pagesList = document.getElementById("pagesList");
+    document.getElementById("pageContent").addEventListener("click", (e) => {
+        if (e.target.classList.contains("spoiler")) {
+            e.target.classList.toggle("hidden");
+        }
+    });
 
     if (pagesSnap.empty) {
         pagesList.innerHTML = `<p class="loading-text">Страниц пока нет</p>`;
@@ -333,18 +337,70 @@
             newEditorEl.id = "inlineEditor";
             editorEl.parentNode.replaceChild(newEditorEl, editorEl);
 
+            // Регистрируем glitch embed
+            const Inline = Quill.import("blots/inline");
+            class GlitchBlot extends Inline {
+                static create(value) {
+                    const node = super.create();
+                    node.setAttribute("data-text", value);
+                    node.className = "glitch";
+                    node.textContent = value;
+                    return node;
+                }
+                static formats(node) {
+                    return node.getAttribute("data-text");
+                }
+            }
+            GlitchBlot.blotName = "glitch-embed";
+            GlitchBlot.tagName = "span";
+            Quill.register(GlitchBlot);
+
+            class SpoilerBlot extends Inline {
+                static create() {
+                    const node = super.create();
+                    node.className = "spoiler hidden";
+                    node.addEventListener("click", () => {
+                        node.classList.toggle("hidden");
+                    });
+                    return node;
+                }
+                static formats() { return true; }
+            }
+            SpoilerBlot.blotName = "spoiler";
+            SpoilerBlot.tagName = "span";
+            Quill.register(SpoilerBlot);
+
+
             currentQuill = new Quill("#inlineEditor", {
                 theme: "snow",
                 modules: {
-                    toolbar: [
-                        [{ header: [1, 2, 3, false] }],
-                        ["bold", "italic", "underline", "strike"],
-                        [{ color: [] }, { background: [] }],
-                        [{ align: [] }],
-                        ["blockquote"],
-                        ["image", "link"],
-                        ["clean"]
-                    ]
+                    toolbar: {
+                        container: [
+                            [{ header: [1, 2, 3, false] }],
+                            ["bold", "italic", "underline", "strike"],
+                            [{ color: [] }, { background: [] }],
+                            [{ align: [] }],
+                            ["blockquote"],
+                            ["image", "link"],
+                            ["glitch"],
+                            ["spoiler"],
+                            ["clean"]
+                        ],
+                        handlers: {
+                            glitch: function() {
+                                const range = this.quill.getSelection();
+                                if (!range || range.length === 0) return;
+                                const text = this.quill.getText(range.index, range.length);
+                                this.quill.deleteText(range.index, range.length);
+                                this.quill.insertEmbed(range.index, "glitch-embed", text);
+                            },
+                            spoiler: function() {
+                                const range = this.quill.getSelection();
+                                if (!range || range.length === 0) return;
+                                this.quill.format("spoiler", true);
+                            }
+                        }
+                    }
                 }
             });
 
@@ -507,6 +563,127 @@
             window.location.href = `secret.html?code=${code}`;
         });
     }
+
+    // КОММЕНТАРИИ
+    async function loadComments(currentUser) {
+        const list = document.getElementById("commentsList");
+        list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
+        try {
+            const snap = await getDocs(query(
+                collection(db, "comments"),
+                where("charId", "==", charId),
+                orderBy("createdAt", "asc")
+            ));
+            if (snap.empty) {
+                list.innerHTML = `<p class="loading-text">Комментариев пока нет</p>`;
+                return;
+            }
+            list.innerHTML = "";
+            snap.forEach(d => {
+                const c = d.data();
+                const date = c.createdAt?.toDate?.()?.toLocaleDateString("ru-RU") || "";
+                const isOwn = currentUser?.uid === c.userId;
+                list.innerHTML += `
+                <div class="comment-item" id="comment-${d.id}">
+                    <div class="comment-header">
+                        <div class="comment-avatar">${(c.userName || "?")[0].toUpperCase()}</div>
+                        <span class="comment-name">${c.userName || "Аноним"}</span>
+                        <span class="comment-date">${date}</span>
+                        ${isOwn ? `
+                            <button class="comment-edit-btn" data-id="${d.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
+                            <button class="comment-delete-btn" data-id="${d.id}">✕</button>
+                        ` : isAdmin ? `
+                            <button class="comment-delete-btn" data-id="${d.id}">✕</button>
+                        ` : ""}
+                    </div>
+                    <div class="comment-text">${c.text}</div>
+                </div>
+            `;
+            });
+            list.querySelectorAll(".comment-edit-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const id = btn.dataset.id;
+                    const oldText = btn.dataset.text;
+                    const commentEl = document.getElementById(`comment-${id}`);
+                    const textEl = commentEl.querySelector(".comment-text");
+
+                    if (commentEl.querySelector(".comment-edit-form")) return;
+
+                    const form = document.createElement("div");
+                    form.className = "comment-edit-form";
+                    form.innerHTML = `
+            <textarea class="auth-input" style="min-height:60px;margin-top:8px">${oldText}</textarea>
+            <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="auth-btn save-edit-btn" style="padding:6px 14px;font-size:13px">Сохранить</button>
+                <button class="nav-btn logout-btn cancel-edit-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
+            </div>
+                    `;
+                    textEl.after(form);
+                    textEl.style.display = "none";
+
+                    form.querySelector(".cancel-edit-btn").addEventListener("click", () => {
+                        form.remove();
+                        textEl.style.display = "block";
+                    });
+
+                    form.querySelector(".save-edit-btn").addEventListener("click", async () => {
+                        const newText = form.querySelector("textarea").value.trim();
+                        if (!newText) return;
+                        await updateDoc(doc(db, "comments", id), { text: newText });
+                        textEl.textContent = newText;
+                        textEl.style.display = "block";
+                        form.remove();
+                        btn.dataset.text = newText;
+                    });
+                });
+            });
+        } catch (e) {
+            list.innerHTML = `<p class="loading-text">Ошибка загрузки</p>`;
+            console.error(e);
+        }
+    }
+
+    // Обновляем существующий onAuthStateChanged
+    const existingAuthBtn = document.getElementById("authButtons");
+    onAuthStateChanged(auth, async (user) => {
+        const authButtons = document.getElementById("authButtons");
+        const form = document.getElementById("commentForm");
+        const loginMsg = document.getElementById("commentLoginMsg");
+
+        if (user) {
+            isAdmin = user.email === ADMIN_EMAIL;
+            authButtons.innerHTML = `
+            ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
+            <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
+        `;
+            document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+                await signOut(auth);
+                window.location.reload();
+            });
+            form.style.display = "block";
+            loginMsg.style.display = "none";
+        } else {
+            authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;
+            form.style.display = "none";
+            loginMsg.style.display = "block";
+        }
+        await loadComments(user);
+    });
+
+    document.getElementById("sendCommentBtn").addEventListener("click", async () => {
+        const text = document.getElementById("commentText").value.trim();
+        if (!text) return;
+        const user = auth.currentUser;
+        if (!user) return;
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userName = userDoc.exists() ? (userDoc.data().name || userDoc.data().email?.split("@")[0]) : "Аноним";
+        await addDoc(collection(db, "comments"), {
+            text, userId: user.uid, userName, charId,
+            createdAt: new Date()
+        });
+        document.getElementById("commentText").value = "";
+        await loadComments(user);
+    });
 
 </script>
 </body>
