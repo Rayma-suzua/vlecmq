@@ -129,6 +129,19 @@
 
         await renderSidebar(pagesList, pages, sections, null, workId, null);
 
+        // автооткрытие страницы из URL или первой страницы
+        const targetPageId = new URLSearchParams(window.location.search).get("page");
+        if (targetPageId) {
+            const targetPage = pages.find(p => p.id === targetPageId);
+            if (targetPage) {
+                const btn = pagesList.querySelector(`[data-page-id="${targetPageId}"]`);
+                if (btn) btn.click();
+                else loadPage(targetPage);
+            }
+        } else if (pages.length > 0) {
+            const firstRootPage = pages.find(p => !p.sectionId) || pages[0];
+            loadPage(firstRootPage);
+        }
         if (isAdmin) {
             const addRootSection = document.createElement("button");
             addRootSection.className = "page-nav-btn add-section-btn";
@@ -148,7 +161,7 @@
         const container = document.querySelector(contentSelector);
         if (!container) return;
 
-        // Строим плоский список всех форм с привязкой к термину
+        // строим плоский список всех форм с привязкой к термину
         const allForms = [];
         terms.forEach(term => {
             allForms.push({ pattern: term.word, term });
@@ -311,6 +324,8 @@
             document.querySelectorAll(".page-nav-btn").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
             loadPage(page);
+            // инициализируем закладку
+            initBookmark(page.id, workId);
         });
         return btn;
     }
@@ -378,6 +393,7 @@
         <div class="page-header-row">
             <h1 class="page-title">${page.title}</h1>
             ${isAdmin ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
+            <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
         </div>
         <div class="page-body" id="pageBody">${page.content}</div>
         ${isAdmin ? `
@@ -392,6 +408,7 @@
         ` : ""}
     `;
 
+        initBookmark(page.id, workId);
         if (!isAdmin) return;
 
         document.getElementById("editInlineBtn").addEventListener("click", () => {
@@ -653,77 +670,142 @@
                 return;
             }
             list.innerHTML = "";
-            snap.forEach(d => {
-                const c = d.data();
-                const date = c.createdAt?.toDate?.()?.toLocaleDateString("ru-RU") || "";
-                const isOwn = currentUser?.uid === c.userId;
-                list.innerHTML += `
-                <div class="comment-item" id="comment-${d.id}">
-                    <div class="comment-header">
-                        <div class="comment-avatar" style="${c.avatar ? `background-image:url('${c.avatar}');background-size:cover;background-position:center` : ''}">
-                            ${c.avatar ? '' : (c.userName || "?")[0].toUpperCase()}
-                        </div>
-                        <span class="comment-name">${c.userName || "Аноним"}</span>
-                        <span class="comment-date">${date}</span>
-                        ${isOwn ? `
-                            <button class="comment-edit-btn" data-id="${d.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
-                            <button class="comment-delete-btn" data-id="${d.id}">✕</button>
-                        ` : isAdmin ? `
-                            <button class="comment-delete-btn" data-id="${d.id}">✕</button>
-                        ` : ""}
-                    </div>
-                    <div class="comment-text">${c.text}</div>
-                </div>
-            `;
+            const allComments = [];
+            snap.forEach(d => allComments.push({ id: d.id, ...d.data() }));
+
+            const rootComments = allComments.filter(c => !c.parentId);
+            const replies = allComments.filter(c => c.parentId);
+
+            rootComments.forEach(c => {
+                list.innerHTML += renderComment(c, currentUser);
             });
-            list.querySelectorAll(".comment-delete-btn").forEach(btn => {
-                btn.addEventListener("click", async () => {
-                    if (!confirm("Удалить комментарий?")) return;
-                    await deleteDoc(doc(db, "comments", btn.dataset.id));
-                    document.getElementById(`comment-${btn.dataset.id}`).remove();
-                });
+
+            // Добавляем ответы под каждым комментарием
+            replies.forEach(r => {
+                const parent = document.getElementById(`comment-${r.parentId}`);
+                if (parent) {
+                    let repliesContainer = parent.querySelector(".replies-container");
+                    if (!repliesContainer) {
+                        repliesContainer = document.createElement("div");
+                        repliesContainer.className = "replies-container";
+                        parent.appendChild(repliesContainer);
+                    }
+                    repliesContainer.innerHTML += renderComment(r, currentUser, true);
+                }
             });
-            list.querySelectorAll(".comment-edit-btn").forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const id = btn.dataset.id;
-                    const oldText = btn.dataset.text;
-                    const commentEl = document.getElementById(`comment-${id}`);
-                    const textEl = commentEl.querySelector(".comment-text");
 
-                    if (commentEl.querySelector(".comment-edit-form")) return;
+            // Listeners
+            initCommentListeners(list, currentUser);
 
-                    const form = document.createElement("div");
-                    form.className = "comment-edit-form";
-                    form.innerHTML = `
-            <textarea class="auth-input" style="min-height:60px;margin-top:8px">${oldText}</textarea>
-            <div style="display:flex;gap:8px;margin-top:8px">
-                <button class="auth-btn save-edit-btn" style="padding:6px 14px;font-size:13px">Сохранить</button>
-                <button class="nav-btn logout-btn cancel-edit-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
-            </div>
-                    `;
-                    textEl.after(form);
-                    textEl.style.display = "none";
-
-                    form.querySelector(".cancel-edit-btn").addEventListener("click", () => {
-                        form.remove();
-                        textEl.style.display = "block";
-                    });
-
-                    form.querySelector(".save-edit-btn").addEventListener("click", async () => {
-                        const newText = form.querySelector("textarea").value.trim();
-                        if (!newText) return;
-                        await updateDoc(doc(db, "comments", id), { text: newText });
-                        textEl.textContent = newText;
-                        textEl.style.display = "block";
-                        form.remove();
-                        btn.dataset.text = newText;
-                    });
-                });
-            });
         } catch (e) {
             list.innerHTML = `<p class="loading-text">Ошибка загрузки</p>`;
             console.error(e);
         }
+    }
+
+    function renderComment(c, currentUser, isReply = false) {
+        const date = c.createdAt?.toDate?.()?.toLocaleDateString("ru-RU") || "";
+        const isOwn = currentUser?.uid === c.userId;
+        return `
+        <div class="comment-item ${isReply ? 'comment-reply' : ''}" id="comment-${c.id}">
+            <div class="comment-header">
+                <div class="comment-avatar" style="${c.avatar ? `background-image:url('${c.avatar}');background-size:cover;background-position:center` : ''}">
+                    ${c.avatar ? '' : (c.userName || "?")[0].toUpperCase()}
+                </div>
+                <span class="comment-name">${c.userName || "Аноним"}</span>
+                <span class="comment-date">${date}</span>
+                ${currentUser && !isReply ? `<button class="comment-reply-btn" data-id="${c.id}" data-name="${c.userName || 'Аноним'}">↩</button>` : ""}
+                ${isOwn ? `
+                    <button class="comment-edit-btn" data-id="${c.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
+                    <button class="comment-delete-btn" data-id="${c.id}">✕</button>
+                ` : isAdmin ? `
+                    <button class="comment-delete-btn" data-id="${c.id}">✕</button>
+                ` : ""}
+            </div>
+            <div class="comment-text">${c.text}</div>
+        </div>
+    `;
+    }
+
+    function initCommentListeners(container, currentUser) {
+        container.querySelectorAll(".comment-delete-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                if (!confirm("Удалить комментарий?")) return;
+                await deleteDoc(doc(db, "comments", btn.dataset.id));
+                document.getElementById(`comment-${btn.dataset.id}`).remove();
+            });
+        });
+
+        container.querySelectorAll(".comment-edit-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const id = btn.dataset.id;
+                const oldText = btn.dataset.text;
+                const commentEl = document.getElementById(`comment-${id}`);
+                const textEl = commentEl.querySelector(".comment-text");
+                if (commentEl.querySelector(".comment-edit-form")) return;
+                const form = document.createElement("div");
+                form.className = "comment-edit-form";
+                form.innerHTML = `
+                <textarea class="auth-input" style="min-height:60px;margin-top:8px">${oldText}</textarea>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                    <button class="auth-btn save-edit-btn" style="padding:6px 14px;font-size:13px">Сохранить</button>
+                    <button class="nav-btn logout-btn cancel-edit-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
+                </div>
+            `;
+                textEl.after(form);
+                textEl.style.display = "none";
+                form.querySelector(".cancel-edit-btn").addEventListener("click", () => {
+                    form.remove();
+                    textEl.style.display = "block";
+                });
+                form.querySelector(".save-edit-btn").addEventListener("click", async () => {
+                    const newText = form.querySelector("textarea").value.trim();
+                    if (!newText) return;
+                    await updateDoc(doc(db, "comments", id), { text: newText });
+                    textEl.textContent = newText;
+                    textEl.style.display = "block";
+                    form.remove();
+                    btn.dataset.text = newText;
+                });
+            });
+        });
+
+        container.querySelectorAll(".comment-reply-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const parentId = btn.dataset.id;
+                const parentName = btn.dataset.name;
+                const commentEl = document.getElementById(`comment-${parentId}`);
+                if (commentEl.querySelector(".reply-form")) return;
+                const form = document.createElement("div");
+                form.className = "reply-form";
+                form.innerHTML = `
+                <textarea class="auth-input" style="min-height:60px;margin-top:8px" placeholder="Ответ для ${parentName}..."></textarea>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                    <button class="auth-btn send-reply-btn" style="padding:6px 14px;font-size:13px">Отправить</button>
+                    <button class="nav-btn logout-btn cancel-reply-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
+                </div>
+            `;
+                commentEl.appendChild(form);
+                form.querySelector(".cancel-reply-btn").addEventListener("click", () => form.remove());
+                form.querySelector(".send-reply-btn").addEventListener("click", async () => {
+                    const text = form.querySelector("textarea").value.trim();
+                    if (!text) return;
+                    const user = auth.currentUser;
+                    if (!user) return;
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    const userData = userDoc.exists() ? userDoc.data() : {};
+                    const userName = userData.name || userData.email?.split("@")[0] || "Аноним";
+                    const avatar = userData.avatar || "";
+                    await addDoc(collection(db, "comments"), {
+                        text, userId: user.uid, userName, avatar,
+                        workId, parentId,
+                        createdAt: new Date()
+                    });
+                    form.remove();
+                    await loadComments(currentUser);
+                });
+            });
+        });
     }
 
     // обновляем существующий onAuthStateChanged
@@ -771,6 +853,50 @@
         document.getElementById("commentText").value = "";
         await loadComments(user);
     });
+
+    async function initBookmark(pageId, workId) {
+        const user = auth.currentUser;
+        const btn = document.getElementById("bookmarkBtn");
+        if (!btn) return;
+
+        if (!user) {
+            btn.style.display = "none";
+            return;
+        }
+
+        // Проверяем есть ли уже закладка
+        const snap = await getDocs(query(
+            collection(db, "bookmarks"),
+            where("userId", "==", user.uid),
+            where("pageId", "==", pageId)
+        ));
+
+        let bookmarkId = snap.empty ? null : snap.docs[0].id;
+        btn.classList.toggle("bookmark-active", !snap.empty);
+        btn.title = snap.empty ? "Добавить в закладки" : "Убрать из закладок";
+
+        btn.addEventListener("click", async () => {
+            if (bookmarkId) {
+                await deleteDoc(doc(db, "bookmarks", bookmarkId));
+                bookmarkId = null;
+                btn.classList.remove("bookmark-active");
+                btn.title = "Добавить в закладки";
+            } else {
+                const workTitle = document.getElementById("workTitle")?.textContent || "";
+                const newDoc = await addDoc(collection(db, "bookmarks"), {
+                    userId: user.uid,
+                    pageId,
+                    workId,
+                    title: document.querySelector(".page-title")?.textContent || "",
+                    parentTitle: workTitle,
+                    createdAt: new Date()
+                });
+                bookmarkId = newDoc.id;
+                btn.classList.add("bookmark-active");
+                btn.title = "Убрать из закладок";
+            }
+        });
+    }
 
 </script>
 <footer class="footer">

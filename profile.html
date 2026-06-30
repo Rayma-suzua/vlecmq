@@ -58,7 +58,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+  import { getFirestore, doc,deleteDoc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
@@ -172,23 +172,39 @@
     list.innerHTML = "";
     for (const d of snap.docs) {
       const b = d.data();
-      let title = b.title || "Без названия";
       let link = "#";
+      let subtitle = "";
 
-      if (b.workId) link = `work.html?id=${b.workId}`;
-      if (b.characterId) link = `character.html?id=${b.characterId}`;
+      if (b.workId && b.pageId) {
+        link = `work.html?id=${b.workId}&page=${b.pageId}`;
+        subtitle = b.workTitle || "Произведение";
+      } else if (b.characterId && b.pageId) {
+        link = `character.html?id=${b.characterId}&page=${b.pageId}`;
+        subtitle = "Персонаж";
+      } else if (b.workId) {
+        link = `work.html?id=${b.workId}`;
+        subtitle = "Произведение";
+      } else if (b.characterId) {
+        link = `character.html?id=${b.characterId}`;
+        subtitle = "Персонаж";
+      }
 
+      const date = b.createdAt?.toDate?.()?.toLocaleDateString("ru-RU") || "";
       list.innerHTML += `
-                <div class="admin-work-item" id="bookmark-${d.id}">
-                    <div style="flex:1">
-                        <div class="admin-work-name">
-                            <a href="${link}" style="color:var(--accent);text-decoration:none">${title}</a>
-                        </div>
-                        <div class="admin-work-desc">${b.workId ? "Произведение" : "Персонаж"}</div>
+           <div class="admin-work-item" id="bookmark-${d.id}">
+                <div style="flex:1">
+                    <div class="admin-work-name">
+                        <a href="${link}" style="color:var(--accent);text-decoration:none">${b.title || "Без названия"}</a>
                     </div>
-                    <button class="delete-btn" data-id="${d.id}">Удалить</button>
+                    <div class="admin-work-desc">
+                        ${b.parentTitle ? `<span>${b.parentTitle}</span> · ` : ""}
+                        <span>${subtitle}</span>
+                        ${date ? ` · ${date}` : ""}
+                    </div>
                 </div>
-            `;
+                <button class="delete-btn" data-id="${d.id}">Удалить</button>
+            </div>
+        `;
     }
 
     list.querySelectorAll(".delete-btn").forEach(btn => {

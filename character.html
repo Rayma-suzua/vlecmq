@@ -152,6 +152,17 @@
 
         await renderSidebar(pagesList, pages, sections, null, null, charId);
 
+        const targetPageId = new URLSearchParams(window.location.search).get("page");
+        if (targetPageId) {
+            const targetPage = pages.find(p => p.id === targetPageId);
+            if (targetPage) {
+                loadPage(targetPage);
+            }
+        } else if (pages.length > 0) {
+            const firstRootPage = pages.find(p => !p.sectionId) || pages[0];
+            loadPage(firstRootPage);
+        }
+
         if (isAdmin) {
             const addRootSection = document.createElement("button");
             addRootSection.className = "page-nav-btn add-section-btn";
@@ -159,11 +170,12 @@
             addRootSection.addEventListener("click", () => showAddSectionForm(pagesList, null, null, charId, pages, sections));
             pagesList.appendChild(addRootSection);
         }
+
     }
 
 
     async function renderSidebar(container, pages, sections, parentId, workId, characterId) {
-        // Показываем страницы без раздела (только на корневом уровне)
+        // показываем страницы без раздела (только на корневом уровне)
         if (parentId === null) {
             const rootPages = pages.filter(p => !p.sectionId);
             rootPages.forEach(page => {
@@ -172,7 +184,7 @@
             });
         }
 
-        // Показываем разделы этого уровня
+        // показываем разделы этого уровня
         const levelSections = sections.filter(s => (s.parentId || null) === parentId);
         for (const section of levelSections) {
             const sectionEl = document.createElement("div");
@@ -196,20 +208,20 @@
             sectionContent.className = "sidebar-section-content";
             sectionContent.style.display = "none";
 
-            // Страницы этого раздела
+            // страницы этого раздела
             const sectionPages = pages.filter(p => p.sectionId === section.id);
             sectionPages.forEach(page => {
                 const btn = createPageBtn(page);
                 sectionContent.appendChild(btn);
             });
 
-            // Подразделы рекурсивно
+            // подразделы рекурсивно
             await renderSidebar(sectionContent, pages, sections, section.id, workId, characterId);
 
             sectionEl.appendChild(sectionContent);
             container.appendChild(sectionEl);
 
-            // Открыть/закрыть раздел
+            // открыть/закрыть раздел
             sectionHeader.querySelector(".sidebar-section-toggle").addEventListener("click", () => {
                 const isOpen = sectionContent.style.display !== "none";
                 sectionContent.style.display = isOpen ? "none" : "block";
@@ -244,6 +256,8 @@
             document.querySelectorAll(".page-nav-btn").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
             loadPage(page);
+            // инициализируем закладку
+            initBookmark(page.id, charId);
         });
         return btn;
     }
@@ -271,7 +285,7 @@
             if (characterId) sectionData.characterId = characterId;
             const newDoc = await addDoc(collection(db, "sections"), sectionData);
             form.remove();
-            // Перезагружаем сайдбар
+            // перезагружаем сайдбар
             window.location.reload();
         });
     }
@@ -311,6 +325,7 @@
         <div class="page-header-row">
             <h1 class="page-title">${page.title}</h1>
             ${isAdmin ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
+            <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
         </div>
         <div class="page-body" id="pageBody">${page.content}</div>
         ${isAdmin ? `
@@ -325,6 +340,7 @@
         ` : ""}
     `;
 
+        initBookmark(page.id, charId);
         if (!isAdmin) return;
 
         document.getElementById("editInlineBtn").addEventListener("click", () => {
@@ -337,7 +353,7 @@
             newEditorEl.id = "inlineEditor";
             editorEl.parentNode.replaceChild(newEditorEl, editorEl);
 
-            // Регистрируем glitch embed
+            // регистрируем glitch embed
             const Inline = Quill.import("blots/inline");
             class GlitchBlot extends Inline {
                 static create(value) {
@@ -404,7 +420,7 @@
                 }
             });
 
-            // Очищаем контент от тултипов и nbsp перед загрузкой в редактор
+            // очищаем контент от тултипов и nbsp перед загрузкой в редактор
             const tempDiv = document.createElement("div");
             tempDiv.innerHTML = page.content || "";
             tempDiv.querySelectorAll("a.term-link").forEach(a => {
@@ -412,7 +428,7 @@
                 span.innerHTML = a.innerHTML;
                 a.parentNode.replaceChild(span, a);
             });
-            // Возвращаем nbsp обратно в табуляцию для редактора
+            // возвращаем nbsp обратно в табуляцию для редактора
             currentQuill.root.innerHTML = tempDiv.innerHTML.replace(/&nbsp;&nbsp;&nbsp;/g, '\t');
 
             currentQuill.root.addEventListener("click", (e) => {
@@ -591,6 +607,7 @@
                         </div>
                         <span class="comment-name">${c.userName || "Аноним"}</span>
                         <span class="comment-date">${date}</span>
+                        ${user ? `<button class="comment-reply-btn" data-id="${d.id}" data-name="${c.userName || 'Аноним'}">↩ Ответить</button>` : ""}
                         ${isOwn ? `
                             <button class="comment-edit-btn" data-id="${d.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
                             <button class="comment-delete-btn" data-id="${d.id}">✕</button>
@@ -645,7 +662,7 @@
         }
     }
 
-    // Обновляем существующий onAuthStateChanged
+    // обновляем существующий onAuthStateChanged
     const existingAuthBtn = document.getElementById("authButtons");
     onAuthStateChanged(auth, async (user) => {
         const authButtons = document.getElementById("authButtons");
@@ -690,6 +707,49 @@
         document.getElementById("commentText").value = "";
         await loadComments(user);
     });
+
+    async function initBookmark(pageId, charId) {
+        const user = auth.currentUser;
+        const btn = document.getElementById("bookmarkBtn");
+        if (!btn) return;
+
+        if (!user) {
+            btn.style.display = "none";
+            return;
+        }
+
+        const snap = await getDocs(query(
+            collection(db, "bookmarks"),
+            where("userId", "==", user.uid),
+            where("pageId", "==", pageId)
+        ));
+
+        let bookmarkId = snap.empty ? null : snap.docs[0].id;
+        btn.classList.toggle("bookmark-active", !snap.empty);
+        btn.title = snap.empty ? "Добавить в закладки" : "Убрать из закладок";
+
+        btn.addEventListener("click", async () => {
+            if (bookmarkId) {
+                await deleteDoc(doc(db, "bookmarks", bookmarkId));
+                bookmarkId = null;
+                btn.classList.remove("bookmark-active");
+                btn.title = "Добавить в закладки";
+            } else {
+                const charName = document.getElementById("charName")?.textContent || "";
+                const newDoc = await addDoc(collection(db, "bookmarks"), {
+                    userId: user.uid,
+                    pageId,
+                    characterId: charId,
+                    title: document.querySelector(".page-title")?.textContent || "",
+                    parentTitle: charName,
+                    createdAt: new Date()
+                });
+                bookmarkId = newDoc.id;
+                btn.classList.add("bookmark-active");
+                btn.title = "Убрать из закладок";
+            }
+        });
+    }
 
 </script>
 </body>
