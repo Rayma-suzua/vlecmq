@@ -586,7 +586,9 @@
                 list.innerHTML += `
                 <div class="comment-item" id="comment-${d.id}">
                     <div class="comment-header">
-                        <div class="comment-avatar">${(c.userName || "?")[0].toUpperCase()}</div>
+                        <div class="comment-avatar" style="${c.avatar ? `background-image:url('${c.avatar}');background-size:cover;background-position:center` : ''}">
+                            ${c.avatar ? '' : (c.userName || "?")[0].toUpperCase()}
+                        </div>
                         <span class="comment-name">${c.userName || "Аноним"}</span>
                         <span class="comment-date">${date}</span>
                         ${isOwn ? `
@@ -677,9 +679,12 @@
         const user = auth.currentUser;
         if (!user) return;
         const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userName = userDoc.exists() ? (userDoc.data().name || userDoc.data().email?.split("@")[0]) : "Аноним";
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        const userName = userData.name || userData.email?.split("@")[0] || "Аноним";
+        const avatar = userData.avatar || "";
+
         await addDoc(collection(db, "comments"), {
-            text, userId: user.uid, userName, charId,
+            text, userId: user.uid, userName, avatar, workId,
             createdAt: new Date()
         });
         document.getElementById("commentText").value = "";

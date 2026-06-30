@@ -20,7 +20,7 @@
 
 <div class="profile-layout">
 
-  <!-- ЛЕВАЯ ЧАСТЬ — АВАТАРКА И НИК -->
+  <!-- ЛЕВАЯ ЧАСТЬ АВАТАРКА И НИК -->
   <aside class="profile-sidebar">
     <div class="profile-avatar-wrap">
       <img id="profileAvatar" class="profile-avatar" src="" alt="Аватар">
@@ -40,7 +40,7 @@
     <button class="nav-btn logout-btn" id="logoutBtn" style="margin-top:16px;width:100%">Выйти</button>
   </aside>
 
-  <!-- ПРАВАЯ ЧАСТЬ — ЗАКЛАДКИ -->
+  <!-- ПРАВАЯ ЧАСТЬ ЗАКЛАДКИ -->
   <main class="profile-main">
     <h2 class="admin-section-title">Закладки</h2>
     <div id="bookmarksList" class="admin-works-list">
@@ -99,7 +99,7 @@
             <a href="profile.html" class="nav-btn">Профиль</a>
         `;
 
-    // Загружаем данные пользователя
+    // загружаем данные пользователя
     const userDoc = await getDoc(doc(db, "users", user.uid));
     const userData = userDoc.exists() ? userDoc.data() : {};
 
@@ -115,13 +115,13 @@
       avatar.style.background = "var(--accent)";
     }
 
-    // Выход
+    // выход
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "index.html";
     });
 
-    // Редактировать ник
+    // редактировать ник
     document.getElementById("editNameBtn").addEventListener("click", () => {
       document.getElementById("profileNameForm").style.display = "block";
       document.getElementById("editNameBtn").style.display = "none";
@@ -141,7 +141,7 @@
       document.getElementById("editNameBtn").style.display = "inline-block";
     });
 
-    // Загрузка аватарки
+    // загрузка аватарки
     document.getElementById("avatarEditBtn").addEventListener("click", () => {
       document.getElementById("avatarInput").click();
     });
@@ -156,7 +156,7 @@
       document.getElementById("avatarEditBtn").textContent = "Изменить фото";
     });
 
-    // Загрузка закладок
+    // загрузка закладок
     await loadBookmarks(user.uid);
   });
 
@@ -198,6 +198,7 @@
       });
     });
   }
+  // ясасалменяебали
 </script>
 </body>
 </html>

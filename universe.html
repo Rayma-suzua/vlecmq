@@ -109,7 +109,7 @@
   const universeId = params.get("id");
   if (!universeId) { window.location.href = "index.html"; }
 
-  // Загрузить вселенную
+  // загрузить вселенную
   const universeDoc = await getDoc(doc(db, "universes", universeId));
   if (!universeDoc.exists()) { window.location.href = "index.html"; }
 
@@ -121,7 +121,7 @@
     document.getElementById("universeHero").style.backgroundImage = `url('${universe.cover}')`;
   }
 
-  // Загрузить произведения этой вселенной
+  // загрузить произведения этой вселенной
   const worksGrid = document.getElementById("worksGrid");
   const worksSnap = await getDocs(query(
           collection(db, "works"),
@@ -147,7 +147,7 @@
     });
   }
 
-  // Загрузить персонажей вселенной
+  // загрузить персонажей вселенной
   const charsGrid = document.getElementById("charsGrid");
   const charsSnap = await getDocs(query(
           collection(db, "characters"),
@@ -178,7 +178,7 @@
     });
   }
 
-  // Переключение вкладок
+  // переключение вкладок
   document.querySelectorAll(".universe-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".universe-tab").forEach(t => t.classList.remove("active"));
@@ -189,7 +189,7 @@
     });
   });
 
-  // Загрузка законов
+  // загрузка законов
   let lawsLoaded = false;
   async function loadLaws() {
     if (lawsLoaded) return;
@@ -304,7 +304,7 @@
     return form;
   }
 
-  // Тройной клик — секретная страница
+  // тройной клик — секретная страница
   let _clickCount = 0;
   let _clickTimer = null;
   document.addEventListener("click", () => {
@@ -351,7 +351,7 @@
       window.location.href = `secret.html?code=${code}`;
     });
   }
-
+  // а ты хуле палишь
 </script>
 </body>
 </html>

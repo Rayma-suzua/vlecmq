@@ -121,7 +121,7 @@
         pagesSnap.forEach(d => pages.push({ id: d.id, ...d.data() }));
         pages.sort((a, b) => a.createdAt?.seconds - b.createdAt?.seconds);
 
-        // Загружаем разделы и страницы вместе
+        // загрузка разделов и страницы вместе
         const sectionsSnap = await getDocs(query(collection(db, "sections"), where("workId", "==", workId)));
         const sections = [];
         sectionsSnap.forEach(d => sections.push({ id: d.id, ...d.data() }));
@@ -159,7 +159,7 @@
             }
         });
 
-        // Сортируем по длине — длинные первыми
+        // сортируем по длине. длинные первыми
         allForms.sort((a, b) => b.pattern.length - a.pattern.length);
 
         function escapeRegex(str) {
@@ -168,7 +168,7 @@
 
         function processNode(node) {
             if (node.nodeType === 3) {
-                // Проверяем что родитель не является term-link
+                // проверка
                 if (node.parentNode && node.parentNode.classList && node.parentNode.classList.contains("term-link")) return;
 
                 let html = node.textContent;
@@ -230,7 +230,7 @@
 
 
     async function renderSidebar(container, pages, sections, parentId, workId, characterId) {
-        // Показываем страницы без раздела (только на корневом уровне)
+        // показ страницы без раздела. корневой уровень
         if (parentId === null) {
             const rootPages = pages.filter(p => !p.sectionId);
             rootPages.forEach(page => {
@@ -239,7 +239,7 @@
             });
         }
 
-        // Показываем разделы этого уровня
+        // показ разделы этого уровня
         const levelSections = sections.filter(s => (s.parentId || null) === parentId);
         for (const section of levelSections) {
             const sectionEl = document.createElement("div");
@@ -263,20 +263,20 @@
             sectionContent.className = "sidebar-section-content";
             sectionContent.style.display = "none";
 
-            // Страницы этого раздела
+            // страницы этого раздела
             const sectionPages = pages.filter(p => p.sectionId === section.id);
             sectionPages.forEach(page => {
                 const btn = createPageBtn(page);
                 sectionContent.appendChild(btn);
             });
 
-            // Подразделы рекурсивно
+            // подразделы рекурсивно
             await renderSidebar(sectionContent, pages, sections, section.id, workId, characterId);
 
             sectionEl.appendChild(sectionContent);
             container.appendChild(sectionEl);
 
-            // Открыть/закрыть раздел
+            // открыть/закрыть раздел
             sectionHeader.querySelector(".sidebar-section-toggle").addEventListener("click", () => {
                 const isOpen = sectionContent.style.display !== "none";
                 sectionContent.style.display = isOpen ? "none" : "block";
@@ -338,7 +338,7 @@
             if (characterId) sectionData.characterId = characterId;
             const newDoc = await addDoc(collection(db, "sections"), sectionData);
             form.remove();
-            // Перезагружаем сайдбар
+            // перезагруз сайдбар
             window.location.reload();
         });
     }
@@ -404,7 +404,7 @@
             newEditorEl.id = "inlineEditor";
             editorEl.parentNode.replaceChild(newEditorEl, editorEl);
 
-            // Регистрируем glitch embed
+            // рег glitch embed
             const Inline = Quill.import("blots/inline");
             class GlitchBlot extends Inline {
                 static create(value) {
@@ -470,7 +470,7 @@
                 }
             });
 
-            // Очищаем контент от тултипов и nbsp перед загрузкой в редактор
+            // очищаем контент от тултипов и nbsp перед загрузкой в редактор
             const tempDiv = document.createElement("div");
             tempDiv.innerHTML = page.content || "";
             tempDiv.querySelectorAll("a.term-link").forEach(a => {
@@ -602,7 +602,7 @@
         const popup = document.getElementById("imgPopup");
         if (popup) popup.remove();
     }
-    // Тултипы инициализируются после загрузки первой страницы
+    // тултипы инициализируются после загрузки первой страницы
     setTimeout(() => initTooltips(db, "#pageBody"), 300);
 
     function showSecretModal() {
@@ -660,7 +660,9 @@
                 list.innerHTML += `
                 <div class="comment-item" id="comment-${d.id}">
                     <div class="comment-header">
-                        <div class="comment-avatar">${(c.userName || "?")[0].toUpperCase()}</div>
+                        <div class="comment-avatar" style="${c.avatar ? `background-image:url('${c.avatar}');background-size:cover;background-position:center` : ''}">
+                            ${c.avatar ? '' : (c.userName || "?")[0].toUpperCase()}
+                        </div>
                         <span class="comment-name">${c.userName || "Аноним"}</span>
                         <span class="comment-date">${date}</span>
                         ${isOwn ? `
@@ -724,7 +726,7 @@
         }
     }
 
-    // Обновляем существующий onAuthStateChanged
+    // обновляем существующий onAuthStateChanged
     const existingAuthBtn = document.getElementById("authButtons");
     onAuthStateChanged(auth, async (user) => {
         const authButtons = document.getElementById("authButtons");
@@ -758,9 +760,12 @@
         const user = auth.currentUser;
         if (!user) return;
         const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userName = userDoc.exists() ? (userDoc.data().name || userDoc.data().email?.split("@")[0]) : "Аноним";
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        const userName = userData.name || userData.email?.split("@")[0] || "Аноним";
+        const avatar = userData.avatar || "";
+
         await addDoc(collection(db, "comments"), {
-            text, userId: user.uid, userName, workId,
+            text, userId: user.uid, userName, avatar, workId,
             createdAt: new Date()
         });
         document.getElementById("commentText").value = "";
