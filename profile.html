@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профиль</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">VL-EC-MQ</a>
+    <nav class="nav">
+      <a href="glossary.html" class="nav-link">Глоссарий</a>
+      <div id="authButtons"></div>
+    </nav>
+  </div>
+</header>
+
+<div class="profile-layout">
+
+  <!-- ЛЕВАЯ ЧАСТЬ — АВАТАРКА И НИК -->
+  <aside class="profile-sidebar">
+    <div class="profile-avatar-wrap">
+      <img id="profileAvatar" class="profile-avatar" src="" alt="Аватар">
+      <button class="profile-avatar-edit" id="avatarEditBtn">Изменить фото</button>
+      <input type="file" id="avatarInput" accept="image/*" style="display:none">
+    </div>
+    <div class="profile-name-wrap">
+      <div id="profileNameDisplay" class="profile-name"></div>
+      <button class="profile-edit-btn" id="editNameBtn">✏️ Изменить ник</button>
+      <div id="profileNameForm" style="display:none">
+        <input type="text" id="profileNameInput" class="auth-input" placeholder="Новый ник">
+        <button class="auth-btn" id="saveNameBtn">Сохранить</button>
+        <button class="nav-btn logout-btn" id="cancelNameBtn">Отмена</button>
+      </div>
+    </div>
+    <p class="profile-email" id="profileEmail"></p>
+    <button class="nav-btn logout-btn" id="logoutBtn" style="margin-top:16px;width:100%">Выйти</button>
+  </aside>
+
+  <!-- ПРАВАЯ ЧАСТЬ — ЗАКЛАДКИ -->
+  <main class="profile-main">
+    <h2 class="admin-section-title">Закладки</h2>
+    <div id="bookmarksList" class="admin-works-list">
+      <p class="loading-text">Загрузка...</p>
+    </div>
+  </main>
+
+</div>
+
+<footer class="footer">
+  © 2026 Rayma Suzua/Rintarocan (Рэйма Сузуя/Ринтаросан). Все персонажи, миры и произведения являются интеллектуальной собственностью автора.<br>
+  Любое копирование или использование без разрешения запрещено.
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
+    authDomain: "vlecmq.firebaseapp.com",
+    projectId: "vlecmq",
+    storageBucket: "vlecmq.firebasestorage.app",
+    messagingSenderId: "730050177884",
+    appId: "1:730050177884:web:d4c7c17614b6aa51c96f99"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
+
+  async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "sititit");
+    const res = await fetch("https://api.cloudinary.com/v1_1/dnhnxdkmh/image/upload", {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
+    return data.secure_url;
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const isAdmin = user.email === ADMIN_EMAIL;
+    const authButtons = document.getElementById("authButtons");
+    authButtons.innerHTML = `
+            ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
+            <a href="profile.html" class="nav-btn">Профиль</a>
+        `;
+
+    // Загружаем данные пользователя
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    const userData = userDoc.exists() ? userDoc.data() : {};
+
+    document.getElementById("profileEmail").textContent = user.email;
+    document.getElementById("profileNameDisplay").textContent = userData.name || "Без имени";
+    document.getElementById("profileNameInput").value = userData.name || "";
+
+    const avatar = document.getElementById("profileAvatar");
+    if (userData.avatar) {
+      avatar.src = userData.avatar;
+    } else {
+      avatar.src = "";
+      avatar.style.background = "var(--accent)";
+    }
+
+    // Выход
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    });
+
+    // Редактировать ник
+    document.getElementById("editNameBtn").addEventListener("click", () => {
+      document.getElementById("profileNameForm").style.display = "block";
+      document.getElementById("editNameBtn").style.display = "none";
+    });
+
+    document.getElementById("cancelNameBtn").addEventListener("click", () => {
+      document.getElementById("profileNameForm").style.display = "none";
+      document.getElementById("editNameBtn").style.display = "inline-block";
+    });
+
+    document.getElementById("saveNameBtn").addEventListener("click", async () => {
+      const newName = document.getElementById("profileNameInput").value.trim();
+      if (!newName) return;
+      await updateDoc(doc(db, "users", user.uid), { name: newName });
+      document.getElementById("profileNameDisplay").textContent = newName;
+      document.getElementById("profileNameForm").style.display = "none";
+      document.getElementById("editNameBtn").style.display = "inline-block";
+    });
+
+    // Загрузка аватарки
+    document.getElementById("avatarEditBtn").addEventListener("click", () => {
+      document.getElementById("avatarInput").click();
+    });
+
+    document.getElementById("avatarInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      document.getElementById("avatarEditBtn").textContent = "Загружаем...";
+      const url = await uploadFile(file);
+      await updateDoc(doc(db, "users", user.uid), { avatar: url });
+      document.getElementById("profileAvatar").src = url;
+      document.getElementById("avatarEditBtn").textContent = "Изменить фото";
+    });
+
+    // Загрузка закладок
+    await loadBookmarks(user.uid);
+  });
+
+  async function loadBookmarks(userId) {
+    const list = document.getElementById("bookmarksList");
+    const snap = await getDocs(query(collection(db, "bookmarks"), where("userId", "==", userId)));
+
+    if (snap.empty) {
+      list.innerHTML = `<p class="loading-text">Закладок пока нет</p>`;
+      return;
+    }
+
+    list.innerHTML = "";
+    for (const d of snap.docs) {
+      const b = d.data();
+      let title = b.title || "Без названия";
+      let link = "#";
+
+      if (b.workId) link = `work.html?id=${b.workId}`;
+      if (b.characterId) link = `character.html?id=${b.characterId}`;
+
+      list.innerHTML += `
+                <div class="admin-work-item" id="bookmark-${d.id}">
+                    <div style="flex:1">
+                        <div class="admin-work-name">
+                            <a href="${link}" style="color:var(--accent);text-decoration:none">${title}</a>
+                        </div>
+                        <div class="admin-work-desc">${b.workId ? "Произведение" : "Персонаж"}</div>
+                    </div>
+                    <button class="delete-btn" data-id="${d.id}">Удалить</button>
+                </div>
+            `;
+    }
+
+    list.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await deleteDoc(doc(db, "bookmarks", btn.dataset.id));
+        document.getElementById(`bookmark-${btn.dataset.id}`).remove();
+      });
+    });
+  }
+</script>
+</body>
+</html>

@@ -86,18 +86,21 @@
     const authButtons = document.getElementById("authButtons");
     if (user) {
       isAdmin = user.email === ADMIN_EMAIL;
-
       authButtons.innerHTML = `
-                ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
-                <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
-            `;
+        ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
+        <a href="profile.html" class="nav-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted)">${user.email}</a>
+        <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
+    `;
       document.getElementById("logoutBtn")?.addEventListener("click", async () => {
         await signOut(auth);
         window.location.reload();
       });
+      form.style.display = "block";
+      loginMsg.style.display = "none";
     } else {
-      isAdmin = false; // если не авторизован — точно не админ
       authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;
+      form.style.display = "none";
+      loginMsg.style.display = "block";
     }
     loadLaws();
   });
