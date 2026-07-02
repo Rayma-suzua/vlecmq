@@ -163,7 +163,7 @@
             loadPage(firstRootPage);
         }
 
-        if (isAdmin) {
+        if (auth.currentUser?.email === ADMIN_EMAIL) {
             const addRootSection = document.createElement("button");
             addRootSection.className = "page-nav-btn add-section-btn";
             addRootSection.textContent = "+ Добавить раздел";
@@ -196,7 +196,7 @@
             sectionHeader.innerHTML = `
             <button class="sidebar-section-toggle">▶</button>
             <span class="sidebar-section-title">${section.title}</span>
-            ${isAdmin ? `
+            ${auth.currentUser?.email === ADMIN_EMAIL ? `
                 <button class="sidebar-section-add-page" data-section="${section.id}" title="Добавить страницу">+стр</button>
                 <button class="sidebar-section-add-sub" data-section="${section.id}" title="Добавить подраздел">+раздел</button>
                 <button class="sidebar-section-delete" data-section="${section.id}" title="Удалить раздел">✕</button>
@@ -228,7 +228,7 @@
                 sectionHeader.querySelector(".sidebar-section-toggle").textContent = isOpen ? "▶" : "▼";
             });
 
-            if (isAdmin) {
+            if (auth.currentUser?.email === ADMIN_EMAIL) {
                 sectionHeader.querySelector(".sidebar-section-add-page").addEventListener("click", () => {
                     sectionContent.style.display = "block";
                     sectionHeader.querySelector(".sidebar-section-toggle").textContent = "▼";
@@ -324,11 +324,11 @@
         ${page.cover ? `<img src="${page.cover}" class="page-cover-img">` : ""}
         <div class="page-header-row">
             <h1 class="page-title">${page.title}</h1>
-            ${isAdmin ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
+            ${auth.currentUser?.email === ADMIN_EMAIL ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
             <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
         </div>
         <div class="page-body" id="pageBody">${page.content}</div>
-        ${isAdmin ? `
+        ${auth.currentUser?.email === ADMIN_EMAIL ? `
             <div class="edit-toolbar" id="editToolbar" style="display:none">
                 <div id="inlineEditor"></div>
                 <div class="edit-actions">
@@ -341,7 +341,7 @@
     `;
 
         initBookmark(page.id, charId);
-        if (!isAdmin) return;
+        if (auth.currentUser?.email !== ADMIN_EMAIL) return;
 
         document.getElementById("editInlineBtn").addEventListener("click", () => {
             document.getElementById("pageBody").style.display = "none";
@@ -607,7 +607,7 @@
                         </div>
                         <span class="comment-name">${c.userName || "Аноним"}</span>
                         <span class="comment-date">${date}</span>
-                        ${user ? `<button class="comment-reply-btn" data-id="${d.id}" data-name="${c.userName || 'Аноним'}">↩ Ответить</button>` : ""}
+                        ${currentUser ? `<button class="comment-reply-btn" data-id="${d.id}" data-name="${c.userName || 'Аноним'}">↩ Ответить</button>` : ""}
                         ${isOwn ? `
                             <button class="comment-edit-btn" data-id="${d.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
                             <button class="comment-delete-btn" data-id="${d.id}">✕</button>

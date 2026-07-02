@@ -73,6 +73,9 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
+    function getIsAdmin() {
+        return auth.currentUser?.email === ADMIN_EMAIL;
+    }
 
     let isAdmin = false;
     let currentQuill = null;
@@ -142,7 +145,8 @@
             const firstRootPage = pages.find(p => !p.sectionId) || pages[0];
             loadPage(firstRootPage);
         }
-        if (isAdmin) {
+        const currentUser = auth.currentUser;
+        if (currentUser?.email === ADMIN_EMAIL) {
             const addRootSection = document.createElement("button");
             addRootSection.className = "page-nav-btn add-section-btn";
             addRootSection.textContent = "+ Добавить раздел";
@@ -264,7 +268,7 @@
             sectionHeader.innerHTML = `
             <button class="sidebar-section-toggle">▶</button>
             <span class="sidebar-section-title">${section.title}</span>
-            ${isAdmin ? `
+            ${auth.currentUser?.email === ADMIN_EMAIL ? `
                 <button class="sidebar-section-add-page" data-section="${section.id}" title="Добавить страницу">+стр</button>
                 <button class="sidebar-section-add-sub" data-section="${section.id}" title="Добавить подраздел">+раздел</button>
                 <button class="sidebar-section-delete" data-section="${section.id}" title="Удалить раздел">✕</button>
@@ -296,7 +300,7 @@
                 sectionHeader.querySelector(".sidebar-section-toggle").textContent = isOpen ? "▶" : "▼";
             });
 
-            if (isAdmin) {
+            if (auth.currentUser?.email === ADMIN_EMAIL) {
                 sectionHeader.querySelector(".sidebar-section-add-page").addEventListener("click", () => {
                     sectionContent.style.display = "block";
                     sectionHeader.querySelector(".sidebar-section-toggle").textContent = "▼";
@@ -392,11 +396,11 @@
         ${page.cover ? `<img src="${page.cover}" class="page-cover-img">` : ""}
         <div class="page-header-row">
             <h1 class="page-title">${page.title}</h1>
-            ${isAdmin ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
+            ${auth.currentUser?.email === ADMIN_EMAIL ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
             <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
         </div>
         <div class="page-body" id="pageBody">${page.content}</div>
-        ${isAdmin ? `
+        ${auth.currentUser?.email === ADMIN_EMAIL ? `
             <div class="edit-toolbar" id="editToolbar" style="display:none">
                 <div id="inlineEditor"></div>
                 <div class="edit-actions">
@@ -409,7 +413,7 @@
     `;
 
         initBookmark(page.id, workId);
-        if (!isAdmin) return;
+        if (auth.currentUser?.email !== ADMIN_EMAIL) return;
 
         document.getElementById("editInlineBtn").addEventListener("click", () => {
             document.getElementById("pageBody").style.display = "none";
