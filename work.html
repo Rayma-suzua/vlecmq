@@ -58,7 +58,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, addDoc, deleteDoc, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, addDoc, deleteDoc, collection, query, where, orderBy, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
@@ -660,15 +660,17 @@
     }
 
     // КОММЕНТАРИИ
-    async function loadComments(currentUser) {
+    function loadComments(currentUser) {
         const list = document.getElementById("commentsList");
         list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
-        try {
-            const snap = await getDocs(query(
-                collection(db, "comments"),
-                where("workId", "==", workId),
-                orderBy("createdAt", "asc")
-            ));
+
+        const q = query(
+            collection(db, "comments"),
+            where("workId", "==", workId),
+            orderBy("createdAt", "asc")
+        );
+
+        onSnapshot(q, (snap) => {
             if (snap.empty) {
                 list.innerHTML = `<p class="loading-text">Комментариев пока нет</p>`;
                 return;
@@ -684,7 +686,6 @@
                 list.innerHTML += renderComment(c, currentUser);
             });
 
-            // ответы под каждым комментарием
             replies.forEach(r => {
                 const parent = document.getElementById(`comment-${r.parentId}`);
                 if (parent) {
@@ -700,11 +701,7 @@
             });
 
             initCommentListeners(list, currentUser, allComments);
-
-        } catch (e) {
-            list.innerHTML = `<p class="loading-text">Ошибка загрузки</p>`;
-            console.error(e);
-        }
+        });
     }
 
     function renderComment(c, currentUser, isReply = false) {
@@ -894,7 +891,7 @@
             });
         }
         document.getElementById("commentText").value = "";
-        await loadComments(user);
+        loadComments(user);
     });
 
     async function initBookmark(pageId, workId) {
@@ -941,22 +938,30 @@
         });
     }
 
-    async function loadNotifications(userId) {
-        const snap = await getDocs(query(
+    function loadNotifications(userId) {
+        const q = query(
             collection(db, "notifications"),
             where("userId", "==", userId),
             where("read", "==", false)
-        ));
-        const count = snap.size;
-        const countEl = document.getElementById("notifCount");
-        if (countEl) {
-            if (count > 0) {
-                countEl.textContent = count;
-                countEl.style.display = "inline";
-            } else {
-                countEl.style.display = "none";
+        );
+
+        onSnapshot(q, (snap) => {
+            const count = snap.size;
+            const countEl = document.getElementById("notifCount");
+            if (countEl) {
+                if (count > 0) {
+                    countEl.textContent = count;
+                    countEl.style.display = "inline";
+                } else {
+                    countEl.style.display = "none";
+                }
             }
-        }
+
+            const bell = document.getElementById("notifBell");
+            if (bell) {
+                bell.onclick = () => showNotifications(snap.docs, userId);
+            }
+        });
 
         document.getElementById("notifBell")?.addEventListener("click", async () => {
             // Показываем список уведомлений
