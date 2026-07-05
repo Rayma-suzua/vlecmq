@@ -619,7 +619,7 @@
                 }
             });
 
-            initCommentListeners(list, currentUser);
+            initCommentListeners(list, currentUser, allComments);
 
         } catch (e) {
             list.innerHTML = `<p class="loading-text">Ошибка загрузки</p>`;
@@ -656,7 +656,7 @@
     `;
     }
 
-    function initCommentListeners(container, currentUser) {
+    function initCommentListeners(container, currentUser, allComments) {
         container.querySelectorAll(".comment-delete-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
                 if (!confirm("Удалить комментарий?")) return;
@@ -734,6 +734,18 @@
                         replyToText, replyToName,
                         createdAt: new Date()
                     });
+                    // уведа
+                    const parentComment = allComments.find(c => c.id === parentId);
+                    if (parentComment && parentComment.userId !== user.uid) {
+                        await addDoc(collection(db, "notifications"), {
+                            userId: parentComment.userId,
+                            type: "reply",
+                            text: `${userName} ответил на ваш комментарий: "${text.slice(0, 50)}"`,
+                            link: window.location.href,
+                            read: false,
+                            createdAt: new Date()
+                        });
+                    }
                     form.remove();
                     await loadComments(currentUser);
                 });
@@ -750,11 +762,13 @@
 
         if (user) {
             isAdmin = user.email === ADMIN_EMAIL;
+            loadNotifications(user.uid);
             authButtons.innerHTML = `
-        ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
-        <a href="profile.html" class="nav-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted)">${user.email}</a>
-        <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
-    `;
+                ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
+                <button class="notif-bell" id="notifBell">🔔 <span class="notif-count" id="notifCount" style="display:none">0</span></button>
+                <a href="profile.html" class="nav-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted)">Профиль</a>
+                <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
+            `;
             document.getElementById("logoutBtn")?.addEventListener("click", async () => {
                 await signOut(auth);
                 window.location.reload();
@@ -828,6 +842,75 @@
                 btn.title = "Убрать из закладок";
             }
         });
+    }
+
+    async function loadNotifications(userId) {
+        const snap = await getDocs(query(
+            collection(db, "notifications"),
+            where("userId", "==", userId),
+            where("read", "==", false)
+        ));
+        const count = snap.size;
+        const countEl = document.getElementById("notifCount");
+        if (countEl) {
+            if (count > 0) {
+                countEl.textContent = count;
+                countEl.style.display = "inline";
+            } else {
+                countEl.style.display = "none";
+            }
+        }
+
+        document.getElementById("notifBell")?.addEventListener("click", async () => {
+            // Показываем список уведомлений
+            showNotifications(snap.docs, userId);
+        });
+    }
+
+    function showNotifications(docs, userId) {
+        const existing = document.getElementById("notifDropdown");
+        if (existing) { existing.remove(); return; }
+
+        const dropdown = document.createElement("div");
+        dropdown.id = "notifDropdown";
+        dropdown.className = "notif-dropdown";
+
+        if (docs.length === 0) {
+            dropdown.innerHTML = `<p class="loading-text" style="padding:16px">Уведомлений нет</p>`;
+        } else {
+            docs.forEach(d => {
+                const n = d.data();
+                const date = n.createdAt?.toDate?.()?.toLocaleDateString("ru-RU") || "";
+                dropdown.innerHTML += `
+                <a href="${n.link}" class="notif-item" data-id="${d.id}">
+                    <div class="notif-text">${n.text}</div>
+                    <div class="notif-date">${date}</div>
+                </a>
+            `;
+            });
+            dropdown.innerHTML += `<button class="notif-clear" id="notifClear">Отметить все прочитанными</button>`;
+        }
+
+        document.getElementById("notifBell").after(dropdown);
+
+        dropdown.querySelectorAll(".notif-item").forEach(item => {
+            item.addEventListener("click", async () => {
+                await updateDoc(doc(db, "notifications", item.dataset.id), { read: true });
+            });
+        });
+
+        document.getElementById("notifClear")?.addEventListener("click", async () => {
+            const updates = docs.map(d => updateDoc(doc(db, "notifications", d.id), { read: true }));
+            await Promise.all(updates);
+            dropdown.remove();
+            document.getElementById("notifCount").style.display = "none";
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!dropdown.contains(e.target) && e.target.id !== "notifBell") {
+                dropdown.remove();
+            }
+        }, { once: true });
     }
 
 </script>
