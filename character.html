@@ -608,11 +608,12 @@
             replies.forEach(r => {
                 const parent = document.getElementById(`comment-${r.parentId}`);
                 if (parent) {
-                    let repliesContainer = parent.querySelector(".replies-container");
+                    const body = parent.querySelector(".comment-body");
+                    let repliesContainer = body.querySelector(".replies-container");
                     if (!repliesContainer) {
                         repliesContainer = document.createElement("div");
                         repliesContainer.className = "replies-container";
-                        parent.after(repliesContainer);
+                        body.appendChild(repliesContainer);
                     }
                     repliesContainer.innerHTML += renderComment(r, currentUser, true);
                 }
@@ -630,28 +631,26 @@
         const date = c.createdAt?.toDate?.()?.toLocaleString("ru-RU", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"}) || "";
         const isOwn = currentUser?.uid === c.userId;
         return `
-        <div class="comment-item ${isReply ? 'comment-reply' : ''}" id="comment-${c.id}">
-            <div class="comment-header">
-                <span class="comment-date">${date}</span>
-                <span class="comment-name">${c.userName || "Аноним"}</span>
-                ${isOwn ? `
-                    <button class="comment-edit-btn" data-id="${c.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
-                    <button class="comment-delete-btn" data-id="${c.id}">✕</button>
-                ` : auth.currentUser?.email === ADMIN_EMAIL ? `
-                    <button class="comment-delete-btn" data-id="${c.id}">✕</button>
-                ` : ""}
+        <div class="${isReply ? 'comment-reply' : 'comment-item'}" id="comment-${c.id}">
+            <div class="comment-avatar" style="${c.avatar ? `background-image:url('${c.avatar}');background-size:cover;background-position:center` : ''}">
+                ${c.avatar ? '' : (c.userName || "?")[0].toUpperCase()}
             </div>
-            <div style="display:flex;gap:10px;align-items:flex-start">
-                <div class="comment-avatar" style="${c.avatar ? `background-image:url('${c.avatar}');background-size:cover;background-position:center` : ''}">
-                    ${c.avatar ? '' : (c.userName || "?")[0].toUpperCase()}
+            <div class="comment-body">
+                <div class="comment-header">
+                    <span class="comment-name">${c.userName || "Аноним"}</span>
+                    <span class="comment-date">${date}</span>
+                    ${isOwn ? `
+                        <button class="comment-edit-btn" data-id="${c.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
+                        <button class="comment-delete-btn" data-id="${c.id}">✕</button>
+                    ` : auth.currentUser?.email === ADMIN_EMAIL ? `
+                        <button class="comment-delete-btn" data-id="${c.id}">✕</button>
+                    ` : ""}
                 </div>
-                <div style="flex:1;min-width:0">
-                    ${c.replyToText ? `<div class="comment-quote">${c.replyToName ? `<span class="comment-quote-name">${c.replyToName}:</span> ` : ""}${c.replyToText}</div>` : ""}
-                    <div class="comment-text" style="margin-left:0">${c.text}</div>
+                ${c.replyToText ? `<div class="comment-quote">${c.replyToName ? `<span class="comment-quote-name">${c.replyToName}:</span> ` : ""}${c.replyToText}</div>` : ""}
+                <div class="comment-text">${c.text}</div>
+                <div class="comment-actions">
+                    ${currentUser ? `<button class="comment-reply-btn" data-id="${c.id}" data-name="${c.userName || 'Аноним'}">ответить</button>` : ""}
                 </div>
-            </div>
-            <div class="comment-actions">
-                ${currentUser ? `<button class="comment-reply-btn" data-id="${c.id}" data-name="${c.userName || 'Аноним'}">↩ Ответить</button>` : ""}
             </div>
         </div>
     `;

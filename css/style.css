@@ -1575,39 +1575,41 @@ img.img-right {
 .comments-list {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 12px;
     margin-bottom: 24px;
 }
 
 .comment-item {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 8px;
+    display: flex;
+    gap: 10px;
+}
+
+.comment-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+}
+
+.comment-body {
+    flex: 1;
+    min-width: 0;
 }
 
 .comment-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 8px;
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.comment-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--accent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
-    color: #fff;
-    flex-shrink: 0;
+    margin-bottom: 4px;
 }
 
 .comment-name {
@@ -1625,38 +1627,7 @@ img.img-right {
     font-size: 14px;
     color: var(--text);
     line-height: 1.6;
-    margin-left: 40px;
-}
-
-.comment-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 4px;
-}
-
-.comment-reply-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 12px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: color 0.2s;
-}
-
-.comment-reply-btn:hover {
-    color: var(--accent);
-}
-
-/* ОТВЕТЫ */
-.comment-reply {
-    margin-left: 24px;
-    margin-bottom: 8px;
-    border-left: 2px solid var(--border);
-    padding-left: 12px;
-    max-width: calc(100% - 24px);
-    box-sizing: border-box;
+    word-break: break-word;
 }
 
 .comment-quote {
@@ -1665,7 +1636,6 @@ img.img-right {
     border-radius: 4px;
     padding: 4px 8px;
     margin-bottom: 6px;
-    margin-left: 40px;
     font-size: 12px;
     color: var(--text-muted);
     overflow: hidden;
@@ -1678,36 +1648,70 @@ img.img-right {
     font-weight: 600;
 }
 
-.comment-delete-btn {
+.comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.comment-reply-btn {
     background: none;
     border: none;
     color: var(--text-muted);
     cursor: pointer;
     font-size: 12px;
-    padding: 2px 6px;
-    border-radius: 4px;
+    font-weight: 600;
+    padding: 0;
     transition: color 0.2s;
 }
 
-.comment-delete-btn:hover {
-    color: var(--error);
+.comment-reply-btn:hover {
+    color: var(--accent);
 }
 
-#commentText {
-    margin-bottom: 12px;
-    min-height: 80px;
+.comment-delete-btn, .comment-edit-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.comment-delete-btn:hover { color: var(--error); }
+.comment-edit-btn:hover { color: var(--accent); }
+
+/* ОТВЕТЫ */
+.replies-container {
+    margin-top: 8px;
+    padding-left: 16px;
+    border-left: 2px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.comment-reply {
+    display: flex;
+    gap: 10px;
 }
 
 .reply-form {
     margin-top: 8px;
-    margin-left: 40px;
     padding: 8px;
     background: var(--bg-input);
     border-radius: 8px;
 }
 
-.replies-container {
-    margin-top: 4px;
+.comment-edit-form {
+    margin-top: 8px;
+}
+
+#commentText {
+    margin-bottom: 12px;
+    min-height: 80px;
 }
 
 /* PROFILE */
