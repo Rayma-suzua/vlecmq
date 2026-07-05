@@ -587,7 +587,7 @@
         try {
             const snap = await getDocs(query(
                 collection(db, "comments"),
-                where("charId", "==", charId),
+                where("characterId", "==", charId),
                 orderBy("createdAt", "asc")
             ));
             if (snap.empty) {
@@ -595,71 +595,151 @@
                 return;
             }
             list.innerHTML = "";
-            snap.forEach(d => {
-                const c = d.data();
-                const date = c.createdAt?.toDate?.()?.toLocaleDateString("ru-RU") || "";
-                const isOwn = currentUser?.uid === c.userId;
-                list.innerHTML += `
-                <div class="comment-item" id="comment-${d.id}">
-                    <div class="comment-header">
-                        <div class="comment-avatar" style="${c.avatar ? `background-image:url('${c.avatar}');background-size:cover;background-position:center` : ''}">
-                            ${c.avatar ? '' : (c.userName || "?")[0].toUpperCase()}
-                        </div>
-                        <span class="comment-name">${c.userName || "Аноним"}</span>
-                        <span class="comment-date">${date}</span>
-                        ${currentUser ? `<button class="comment-reply-btn" data-id="${d.id}" data-name="${c.userName || 'Аноним'}">↩ Ответить</button>` : ""}
-                        ${isOwn ? `
-                            <button class="comment-edit-btn" data-id="${d.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
-                            <button class="comment-delete-btn" data-id="${d.id}">✕</button>
-                        ` : isAdmin ? `
-                            <button class="comment-delete-btn" data-id="${d.id}">✕</button>
-                        ` : ""}
-                    </div>
-                    <div class="comment-text">${c.text}</div>
-                </div>
-            `;
+            const allComments = [];
+            snap.forEach(d => allComments.push({ id: d.id, ...d.data() }));
+
+            const rootComments = allComments.filter(c => !c.parentId);
+            const replies = allComments.filter(c => c.parentId);
+
+            rootComments.forEach(c => {
+                list.innerHTML += renderComment(c, currentUser);
             });
-            list.querySelectorAll(".comment-edit-btn").forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const id = btn.dataset.id;
-                    const oldText = btn.dataset.text;
-                    const commentEl = document.getElementById(`comment-${id}`);
-                    const textEl = commentEl.querySelector(".comment-text");
 
-                    if (commentEl.querySelector(".comment-edit-form")) return;
-
-                    const form = document.createElement("div");
-                    form.className = "comment-edit-form";
-                    form.innerHTML = `
-            <textarea class="auth-input" style="min-height:60px;margin-top:8px">${oldText}</textarea>
-            <div style="display:flex;gap:8px;margin-top:8px">
-                <button class="auth-btn save-edit-btn" style="padding:6px 14px;font-size:13px">Сохранить</button>
-                <button class="nav-btn logout-btn cancel-edit-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
-            </div>
-                    `;
-                    textEl.after(form);
-                    textEl.style.display = "none";
-
-                    form.querySelector(".cancel-edit-btn").addEventListener("click", () => {
-                        form.remove();
-                        textEl.style.display = "block";
-                    });
-
-                    form.querySelector(".save-edit-btn").addEventListener("click", async () => {
-                        const newText = form.querySelector("textarea").value.trim();
-                        if (!newText) return;
-                        await updateDoc(doc(db, "comments", id), { text: newText });
-                        textEl.textContent = newText;
-                        textEl.style.display = "block";
-                        form.remove();
-                        btn.dataset.text = newText;
-                    });
-                });
+            replies.forEach(r => {
+                const parent = document.getElementById(`comment-${r.parentId}`);
+                if (parent) {
+                    let repliesContainer = parent.querySelector(".replies-container");
+                    if (!repliesContainer) {
+                        repliesContainer = document.createElement("div");
+                        repliesContainer.className = "replies-container";
+                        parent.after(repliesContainer);
+                    }
+                    repliesContainer.innerHTML += renderComment(r, currentUser, true);
+                }
             });
+
+            initCommentListeners(list, currentUser);
+
         } catch (e) {
             list.innerHTML = `<p class="loading-text">Ошибка загрузки</p>`;
             console.error(e);
         }
+    }
+
+    function renderComment(c, currentUser, isReply = false) {
+        const date = c.createdAt?.toDate?.()?.toLocaleString("ru-RU", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"}) || "";
+        const isOwn = currentUser?.uid === c.userId;
+        return `
+        <div class="comment-item ${isReply ? 'comment-reply' : ''}" id="comment-${c.id}">
+            <div class="comment-header">
+                <span class="comment-date">${date}</span>
+                <span class="comment-name">${c.userName || "Аноним"}</span>
+                ${isOwn ? `
+                    <button class="comment-edit-btn" data-id="${c.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
+                    <button class="comment-delete-btn" data-id="${c.id}">✕</button>
+                ` : auth.currentUser?.email === ADMIN_EMAIL ? `
+                    <button class="comment-delete-btn" data-id="${c.id}">✕</button>
+                ` : ""}
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start">
+                <div class="comment-avatar" style="${c.avatar ? `background-image:url('${c.avatar}');background-size:cover;background-position:center` : ''}">
+                    ${c.avatar ? '' : (c.userName || "?")[0].toUpperCase()}
+                </div>
+                <div style="flex:1;min-width:0">
+                    ${c.replyToText ? `<div class="comment-quote">${c.replyToName ? `<span class="comment-quote-name">${c.replyToName}:</span> ` : ""}${c.replyToText}</div>` : ""}
+                    <div class="comment-text" style="margin-left:0">${c.text}</div>
+                </div>
+            </div>
+            <div class="comment-actions">
+                ${currentUser ? `<button class="comment-reply-btn" data-id="${c.id}" data-name="${c.userName || 'Аноним'}">↩ Ответить</button>` : ""}
+            </div>
+        </div>
+    `;
+    }
+
+    function initCommentListeners(container, currentUser) {
+        container.querySelectorAll(".comment-delete-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                if (!confirm("Удалить комментарий?")) return;
+                await deleteDoc(doc(db, "comments", btn.dataset.id));
+                document.getElementById(`comment-${btn.dataset.id}`).remove();
+            });
+        });
+
+        container.querySelectorAll(".comment-edit-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const id = btn.dataset.id;
+                const oldText = btn.dataset.text;
+                const commentEl = document.getElementById(`comment-${id}`);
+                const textEl = commentEl.querySelector(".comment-text");
+                if (commentEl.querySelector(".comment-edit-form")) return;
+                const form = document.createElement("div");
+                form.className = "comment-edit-form";
+                form.innerHTML = `
+                <textarea class="auth-input" style="min-height:60px;margin-top:8px">${oldText}</textarea>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                    <button class="auth-btn save-edit-btn" style="padding:6px 14px;font-size:13px">Сохранить</button>
+                    <button class="nav-btn logout-btn cancel-edit-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
+                </div>
+            `;
+                textEl.after(form);
+                textEl.style.display = "none";
+                form.querySelector(".cancel-edit-btn").addEventListener("click", () => {
+                    form.remove();
+                    textEl.style.display = "block";
+                });
+                form.querySelector(".save-edit-btn").addEventListener("click", async () => {
+                    const newText = form.querySelector("textarea").value.trim();
+                    if (!newText) return;
+                    await updateDoc(doc(db, "comments", id), { text: newText });
+                    textEl.textContent = newText;
+                    textEl.style.display = "block";
+                    form.remove();
+                    btn.dataset.text = newText;
+                });
+            });
+        });
+
+        container.querySelectorAll(".comment-reply-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const parentId = btn.dataset.id;
+                const parentName = btn.dataset.name;
+                const commentEl = document.getElementById(`comment-${parentId}`);
+                if (commentEl.querySelector(".reply-form")) return;
+                const form = document.createElement("div");
+                form.className = "reply-form";
+                form.innerHTML = `
+                <textarea class="auth-input" style="min-height:60px;margin-top:8px" placeholder="Ответ для ${parentName}..."></textarea>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                    <button class="auth-btn send-reply-btn" style="padding:6px 14px;font-size:13px">Отправить</button>
+                    <button class="nav-btn logout-btn cancel-reply-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
+                </div>
+            `;
+                commentEl.appendChild(form);
+                form.querySelector(".cancel-reply-btn").addEventListener("click", () => form.remove());
+                form.querySelector(".send-reply-btn").addEventListener("click", async () => {
+                    const text = form.querySelector("textarea").value.trim();
+                    if (!text) return;
+                    const user = auth.currentUser;
+                    if (!user) return;
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    const userData = userDoc.exists() ? userDoc.data() : {};
+                    const userName = userData.name || userData.email?.split("@")[0] || "Аноним";
+                    const avatar = userData.avatar || "";
+                    const parentEl = document.getElementById(`comment-${parentId}`);
+                    const replyToText = parentEl?.querySelector(".comment-text")?.textContent?.slice(0, 100) || "";
+                    const replyToName = parentName;
+                    await addDoc(collection(db, "comments"), {
+                        text, userId: user.uid, userName, avatar,
+                        characterId: charId, parentId,
+                        replyToText, replyToName,
+                        createdAt: new Date()
+                    });
+                    form.remove();
+                    await loadComments(currentUser);
+                });
+            });
+        });
     }
 
     // обновляем существующий onAuthStateChanged
@@ -701,7 +781,7 @@
         const avatar = userData.avatar || "";
 
         await addDoc(collection(db, "comments"), {
-            text, userId: user.uid, userName, avatar, workId,
+            text, userId: user.uid, userName, avatar, characterId: charId,
             createdAt: new Date()
         });
         document.getElementById("commentText").value = "";
