@@ -81,7 +81,7 @@
             return;
         }
 
-        // Группировка по первой букве
+        // группировка по первой букве
         const groups = {};
         list.forEach(term => {
             const letter = term.word[0].toUpperCase();
@@ -106,7 +106,7 @@
 
     renderTerms(terms);
 
-    // Поиск
+    // поиск
     document.getElementById("searchInput").addEventListener("input", (e) => {
         const q = e.target.value.toLowerCase();
         renderTerms(terms.filter(t =>
@@ -115,7 +115,7 @@
         ));
     });
 
-    // Якорь из URL (для перехода с тултипа)
+    // URL
     const hash = window.location.hash;
     if (hash) {
         setTimeout(() => {

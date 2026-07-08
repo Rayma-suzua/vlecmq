@@ -232,7 +232,6 @@
     const actWords = ["ACT"];
     const idleWords = ["IDLE", "INACT"];
 
-    // Заменяем только целые токены разделённые точками и дефисами
     return code.split(".").map(segment => {
       const upper = segment.toUpperCase();
       if (errWords.includes(upper)) return `<span class="code-err">${segment}</span>`;

@@ -36,7 +36,6 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-  // ДОБАВЛЕНО: getDoc в импорт ниже
   import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -105,14 +104,13 @@
     const password = document.getElementById("loginPassword").value;
     const errorEl = document.getElementById("authError");
 
-    // ИЗМЕНЕННЫЙ БЛОК TRY-CATCH С ПРОВЕРКОЙ БАНА:
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
       const userDoc = await getDoc(doc(db, "users", cred.user.uid));
 
       if (userDoc.exists() && userDoc.data().blocked) {
         await auth.signOut();
-        errorEl.style.color = "var(--error)"; // возвращаем красный цвет ошибке, если до этого была регистрация
+        errorEl.style.color = "var(--error)";
         errorEl.textContent = "Ваш аккаунт заблокирован.";
         return;
       }

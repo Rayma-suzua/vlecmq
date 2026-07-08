@@ -99,7 +99,7 @@
             <a href="profile.html" class="nav-btn">Профиль</a>
         `;
 
-    // загружаем данные пользователя
+    // данные пользователя
     const userDoc = await getDoc(doc(db, "users", user.uid));
     const userData = userDoc.exists() ? userDoc.data() : {};
 

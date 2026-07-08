@@ -477,7 +477,9 @@
                     });
                     return node;
                 }
-                static formats() { return true; }
+                static formats(node) {
+                    return node.classList.contains("spoiler");
+                }
             }
             SpoilerBlot.blotName = "spoiler";
             SpoilerBlot.tagName = "span";
@@ -828,7 +830,7 @@
                     const userName = userData.name || userData.email?.split("@")[0] || "Аноним";
                     const avatar = userData.avatar || "";
 
-                    // Находим текст родительского комментария для цитаты
+                    // текст родительского комментария для цитаты
                     const parentEl = document.getElementById(`comment-${parentId}`);
                     const replyToText = parentEl?.querySelector(".comment-text")?.textContent?.slice(0, 100) || "";
                     const replyToName = parentName;
@@ -859,7 +861,7 @@
         });
     }
 
-    // обновляем существующий onAuthStateChanged
+    // onAuthStateChanged
     const existingAuthBtn = document.getElementById("authButtons");
     onAuthStateChanged(auth, async (user) => {
         const authButtons = document.getElementById("authButtons");
@@ -930,7 +932,7 @@
             return;
         }
 
-        // Проверяем есть ли уже закладка
+        // есть ли уже закладка
         const snap = await getDocs(query(
             collection(db, "bookmarks"),
             where("userId", "==", user.uid),
@@ -990,7 +992,7 @@
         });
 
         document.getElementById("notifBell")?.addEventListener("click", async () => {
-            // Показываем список уведомлений
+            // список уведомлений
             showNotifications(snap.docs, userId);
         });
     }
