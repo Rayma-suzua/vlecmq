@@ -36,7 +36,8 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+  // ДОБАВЛЕНО: getDoc в импорт ниже
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
@@ -51,7 +52,7 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // Переключение вкладок
+  // переключение вкладок
   document.getElementById("loginTab").addEventListener("click", () => {
     document.getElementById("loginForm").style.display = "block";
     document.getElementById("registerForm").style.display = "none";
@@ -66,7 +67,7 @@
     document.getElementById("loginTab").classList.remove("active");
   });
 
-  // Регистрация
+  // регистрация
   document.getElementById("registerBtn").addEventListener("click", async () => {
     const name = document.getElementById("regName").value.trim();
     const email = document.getElementById("regEmail").value.trim();
@@ -98,19 +99,30 @@
     }
   });
 
-  // Вход
+  // вход
   document.getElementById("loginBtn").addEventListener("click", async () => {
     const email = document.getElementById("loginEmail").value.trim();
     const password = document.getElementById("loginPassword").value;
     const errorEl = document.getElementById("authError");
 
+    // ИЗМЕНЕННЫЙ БЛОК TRY-CATCH С ПРОВЕРКОЙ БАНА:
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const userDoc = await getDoc(doc(db, "users", cred.user.uid));
+
+      if (userDoc.exists() && userDoc.data().blocked) {
+        await auth.signOut();
+        errorEl.style.color = "var(--error)"; // возвращаем красный цвет ошибке, если до этого была регистрация
+        errorEl.textContent = "Ваш аккаунт заблокирован.";
+        return;
+      }
       window.location.href = "index.html";
     } catch (e) {
+      errorEl.style.color = "var(--error)";
       errorEl.textContent = e.message;
     }
   });
+
 </script>
 <footer class="footer">
   © 2026 Rayma Suzua/Rintarocan (Рэйма Сузуя/Ринтаросан). Все персонажи, миры, текстовые материалы и произведения являются интеллектуальной собственностью автора.<br>

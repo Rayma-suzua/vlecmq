@@ -311,7 +311,32 @@
             const pageData = { title, content: "", sectionId, createdAt: new Date() };
             if (workId) pageData.workId = workId;
             if (characterId) pageData.characterId = characterId;
-            await addDoc(collection(db, "pages"), pageData);
+            const newPage = await addDoc(collection(db, "pages"), pageData);
+
+            // уведомление пользователей
+            if (charId) {
+                const bookmarksSnap = await getDocs(query(
+                    collection(db, "bookmarks"),
+                    where("characterId", "==", charId)
+                ));
+                const workTitle = document.getElementById("workTitle")?.textContent || "";
+                const notifPromises = [];
+                bookmarksSnap.forEach(b => {
+                    const bookmark = b.data();
+                    if (bookmark.userId !== auth.currentUser?.uid) {
+                        notifPromises.push(addDoc(collection(db, "notifications"), {
+                            userId: bookmark.userId,
+                            type: "update",
+                            text: `Новая страница "${title}" в "${workTitle}"`,
+                            link: `character.html?id=${charId}&page=${newPage.id}`,
+                            read: false,
+                            createdAt: new Date()
+                        }));
+                    }
+                });
+                await Promise.all(notifPromises);
+            }
+
             form.remove();
             window.location.reload();
         });
@@ -630,12 +655,12 @@
         const isOwn = currentUser?.uid === c.userId;
         return `
         <div class="${isReply ? 'comment-reply' : 'comment-item'}" id="comment-${c.id}">
-            <div class="comment-avatar" style="${c.avatar ? `background-image:url('${c.avatar}');background-size:cover;background-position:center` : ''}">
+            <a href="user.html?id=${c.userId}" class="comment-avatar" style="${c.avatar ? `background-image:url('${c.avatar}');background-size:cover;background-position:center` : ''}">
                 ${c.avatar ? '' : (c.userName || "?")[0].toUpperCase()}
-            </div>
+            </a>
             <div class="comment-body">
                 <div class="comment-header">
-                    <span class="comment-name">${c.userName || "Аноним"}</span>
+                    <a href="user.html?id=${c.userId}" class="comment-name">${c.userName || "Аноним"}</a>
                     <span class="comment-date">${date}</span>
                     ${isOwn ? `
                         <button class="comment-edit-btn" data-id="${c.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
@@ -712,7 +737,7 @@
                     <button class="nav-btn logout-btn cancel-reply-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
                 </div>
             `;
-                commentEl.appendChild(form);
+                commentEl.after(form);
                 form.querySelector(".cancel-reply-btn").addEventListener("click", () => form.remove());
                 form.querySelector(".send-reply-btn").addEventListener("click", async () => {
                     const text = form.querySelector("textarea").value.trim();
@@ -793,6 +818,7 @@
 
         await addDoc(collection(db, "comments"), {
             text, userId: user.uid, userName, avatar, characterId: charId,
+            link: window.location.href,
             createdAt: new Date()
         });
         document.getElementById("commentText").value = "";

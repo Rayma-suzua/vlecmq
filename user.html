@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профиль</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">VL-EC-MQ</a>
+    <nav class="nav">
+      <a href="glossary.html" class="nav-link">Глоссарий</a>
+      <div id="authButtons"></div>
+    </nav>
+  </div>
+</header>
+
+<div class="profile-layout">
+  <aside class="profile-sidebar">
+    <div class="profile-avatar-wrap">
+      <div class="profile-avatar" id="userAvatar" style="display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:700;color:#fff"></div>
+    </div>
+    <div class="profile-name-wrap">
+      <div class="profile-name" id="userName"></div>
+    </div>
+    <div id="adminActions" style="display:none;margin-top:16px;width:100%">
+      <button class="delete-btn" id="blockUserBtn" style="width:100%;padding:10px">🚫 Заблокировать пользователя</button>
+    </div>
+  </aside>
+
+  <main class="profile-main">
+    <h2 class="admin-section-title">Комментарии</h2>
+    <div id="userComments" class="comments-list">
+      <p class="loading-text">Загрузка...</p>
+    </div>
+  </main>
+</div>
+
+<footer class="footer">
+  © 2026 Rayma Suzua/Rintarocan. Все персонажи, миры и произведения являются интеллектуальной собственностью автора.<br>
+  Любое копирование или использование без разрешения запрещено.
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
+    authDomain: "vlecmq.firebaseapp.com",
+    projectId: "vlecmq",
+    storageBucket: "vlecmq.firebasestorage.app",
+    messagingSenderId: "730050177884",
+    appId: "1:730050177884:web:d4c7c17614b6aa51c96f99"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
+
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get("id");
+  if (!userId) { window.location.href = "index.html"; }
+
+  onAuthStateChanged(auth, async (user) => {
+    const authButtons = document.getElementById("authButtons");
+    if (user) {
+      const isAdmin = user.email === ADMIN_EMAIL;
+      authButtons.innerHTML = `
+                ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
+                <a href="profile.html" class="nav-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted)">Профиль</a>
+                <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
+            `;
+      document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.reload();
+      });
+
+      if (isAdmin && userId !== user.uid) {
+        document.getElementById("adminActions").style.display = "block";
+        document.getElementById("blockUserBtn").addEventListener("click", async () => {
+          if (!confirm("Заблокировать этого пользователя навсегда?")) return;
+          await updateDoc(doc(db, "users", userId), { blocked: true });
+          alert("Пользователь заблокирован.");
+        });
+      }
+    } else {
+      authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;
+    }
+  });
+
+  // Загрузить данные пользователя
+  const userDoc = await getDoc(doc(db, "users", userId));
+  if (!userDoc.exists()) { window.location.href = "index.html"; }
+
+  const userData = userDoc.data();
+
+  if (userData.blocked) {
+    document.querySelector(".profile-layout").innerHTML = `<p class="loading-text" style="padding:48px">Этот пользователь заблокирован.</p>`;
+  } else {
+    document.title = userData.name || "Профиль";
+    const avatar = document.getElementById("userAvatar");
+    if (userData.avatar) {
+      avatar.style.backgroundImage = `url('${userData.avatar}')`;
+      avatar.style.backgroundSize = "cover";
+      avatar.style.backgroundPosition = "center";
+    } else {
+      avatar.textContent = (userData.name || "?")[0].toUpperCase();
+      avatar.style.background = "var(--accent)";
+    }
+    document.getElementById("userName").textContent = userData.name || "Без имени";
+
+    // Загрузить комментарии пользователя
+    const snap = await getDocs(query(
+            collection(db, "comments"),
+            where("userId", "==", userId),
+            orderBy("createdAt", "desc")
+    ));
+
+    const list = document.getElementById("userComments");
+    if (snap.empty) {
+      list.innerHTML = `<p class="loading-text">Комментариев пока нет</p>`;
+    } else {
+      list.innerHTML = "";
+      snap.forEach(d => {
+        const c = d.data();
+        const date = c.createdAt?.toDate?.()?.toLocaleDateString("ru-RU") || "";
+        list.innerHTML += `
+                    <div class="comment-item" style="margin-bottom:12px">
+                        <div class="comment-avatar" style="${userData.avatar ? `background-image:url('${userData.avatar}');background-size:cover;background-position:center` : `background:var(--accent)`}">
+                            ${userData.avatar ? '' : (userData.name || "?")[0].toUpperCase()}
+                        </div>
+                        <div class="comment-body">
+                            <div class="comment-header">
+                                <span class="comment-name">${userData.name || "Аноним"}</span>
+                                <span class="comment-date">${date}</span>
+                            </div>
+                            <div class="comment-text">${c.text}</div>
+                            ${c.link ? `<a href="${c.link}" style="font-size:12px;color:var(--accent)">Перейти →</a>` : ""}
+                        </div>
+                    </div>
+                `;
+      });
+    }
+  }
+</script>
+</body>
+</html>

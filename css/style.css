@@ -1558,6 +1558,13 @@ img.img-right {
     font-weight: 700;
 }
 
+.ql-spoiler::after {
+    content: "SP";
+    font-size: 8px;
+    font-weight: 700;
+    color: #a8baed
+}
+
 /* COMMENTS */
 .comments-section {
     border-top: 1px solid var(--border);
@@ -1699,10 +1706,19 @@ img.img-right {
 }
 
 .reply-form {
-    margin-top: 8px;
-    padding: 8px;
+    margin-top: 12px;
+    padding: 16px;
     background: var(--bg-input);
-    border-radius: 8px;
+    border-radius: 10px;
+    box-sizing: border-box;
+    clear: both;
+}
+
+.reply-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 80px;
 }
 
 .comment-edit-form {
@@ -1890,3 +1906,12 @@ img.img-right {
 }
 
 .notif-clear:hover { background: var(--bg-input); }
+
+/* УНИЧТОЖЕНИЕ ЕБЛИВОЙ ЧЁРТОЧКИ */
+a.comment-name, a.comment-avatar {
+    text-decoration: none;
+}
+
+a.comment-name:hover {
+    color: var(--accent);
+}
