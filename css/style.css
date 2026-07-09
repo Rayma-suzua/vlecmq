@@ -1915,3 +1915,20 @@ a.comment-name, a.comment-avatar {
 a.comment-name:hover {
     color: var(--accent);
 }
+
+/* спойлер комм */
+.comment-spoiler-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.comment-spoiler-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}

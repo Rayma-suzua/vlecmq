@@ -53,6 +53,10 @@
         <div id="commentsList" class="comments-list"></div>
         <div id="commentForm" style="display:none">
             <textarea id="commentText" class="auth-input admin-textarea" placeholder="Написать комментарий..."></textarea>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                <button class="comment-spoiler-btn" id="commentSpoilerBtn">[ спойлер ]</button>
+                <span style="font-size:12px;color:var(--text-muted)">Выдели текст и нажми</span>
+            </div>
             <button class="auth-btn" id="sendCommentBtn">Отправить</button>
         </div>
         <p id="commentLoginMsg" class="loading-text" style="display:none">
@@ -672,7 +676,7 @@
                     ` : ""}
                 </div>
                 ${c.replyToText ? `<div class="comment-quote">${c.replyToName ? `<span class="comment-quote-name">${c.replyToName}:</span> ` : ""}${c.replyToText}</div>` : ""}
-                <div class="comment-text">${c.text}</div>
+                <div class="comment-text">${renderCommentText(c.text)}</div>
                 <div class="comment-actions">
                     ${currentUser ? `<button class="comment-reply-btn" data-id="${c.id}" data-name="${c.userName || 'Аноним'}">ответить</button>` : ""}
                 </div>
@@ -827,6 +831,17 @@
         await loadComments(user);
     });
 
+    document.getElementById("commentSpoilerBtn")?.addEventListener("click", () => {
+        const textarea = document.getElementById("commentText");
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.substring(start, end);
+        if (!selected) return;
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(end);
+        textarea.value = `${before}[spoiler]${selected}[/spoiler]${after}`;
+    });
+
     async function initBookmark(pageId, charId) {
         const user = auth.currentUser;
         const btn = document.getElementById("bookmarkBtn");
@@ -945,6 +960,12 @@
                 dropdown.remove();
             }
         }, { once: true });
+    }
+
+    function renderCommentText(text) {
+        return text.replace(/\[spoiler\](.*?)\[\/spoiler\]/gs,
+            '<span class="spoiler hidden" onclick="this.classList.toggle(\'hidden\')">$1</span>'
+        );
     }
 
 </script>
