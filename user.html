@@ -29,6 +29,21 @@
     <div id="adminActions" style="display:none;margin-top:16px;width:100%">
       <button class="delete-btn" id="blockUserBtn" style="width:100%;padding:10px">🚫 Заблокировать пользователя</button>
     </div>
+    <div id="reportSection" style="margin-top:16px;width:100%">
+      <button class="profile-edit-btn" id="reportToggleBtn">⚠️ Пожаловаться</button>
+      <div id="reportForm" style="display:none;margin-top:12px">
+        <select id="reportReason" class="auth-input admin-select" style="margin-bottom:8px">
+          <option value="">— Причина —</option>
+          <option value="spam">Спам</option>
+          <option value="insult">Оскорбление</option>
+          <option value="harassment">Преследование</option>
+          <option value="other">Другое</option>
+        </select>
+        <textarea id="reportText" class="auth-input admin-textarea" placeholder="Дополнительно (необязательно)" style="min-height:60px;margin-bottom:8px"></textarea>
+        <button class="auth-btn" id="sendReportBtn">Отправить жалобу</button>
+        <p class="auth-error" id="reportError"></p>
+      </div>
+    </div>
   </aside>
 
   <main class="profile-main">
@@ -47,7 +62,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, addDoc, updateDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
@@ -148,6 +163,73 @@
       });
     }
   }
+
+  // Жалобы
+  const reportToggle = document.getElementById("reportToggleBtn");
+  const reportForm = document.getElementById("reportForm");
+
+  reportToggle?.addEventListener("click", () => {
+    reportForm.style.display = reportForm.style.display === "none" ? "block" : "none";
+  });
+
+  document.getElementById("sendReportBtn")?.addEventListener("click", async () => {
+    const reason = document.getElementById("reportReason").value;
+    const text = document.getElementById("reportText").value.trim();
+    const errorEl = document.getElementById("reportError");
+
+    if (!reason) { errorEl.textContent = "Выбери причину"; return; }
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      errorEl.textContent = "Нужно войти чтобы пожаловаться";
+      return;
+    }
+
+    if (currentUser.uid === userId) {
+      errorEl.textContent = "Нельзя жаловаться на себя";
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "reports"), {
+        reportedUserId: userId,
+        reportedUserName: userData.name || "Без имени",
+        reporterUserId: currentUser.uid,
+        reason,
+        text,
+        createdAt: new Date(),
+        reviewed: false
+      });
+
+      const adminSnap = await getDocs(query(
+              collection(db, "users"),
+              where("role", "==", "admin")
+      ));
+
+      const allUsers = await getDocs(collection(db, "users"));
+      allUsers.forEach(async d => {
+      });
+
+      await addDoc(collection(db, "notifications"), {
+        userId: "loxb7MFyeiS2ccJ7FX7wFDS2NhS2",
+        type: "report",
+        text: `Жалоба на ${userData.name || "пользователя"}: ${reason}`,
+        link: `user.html?id=${userId}`,
+        read: false,
+        createdAt: new Date()
+      });
+
+      errorEl.style.color = "#4caf50";
+      errorEl.textContent = "Жалоба отправлена!";
+      document.getElementById("reportReason").value = "";
+      document.getElementById("reportText").value = "";
+      setTimeout(() => { reportForm.style.display = "none"; }, 2000);
+    } catch (e) {
+      errorEl.style.color = "var(--error)";
+      errorEl.textContent = e.message;
+    }
+  });
+
 </script>
 </body>
 </html>

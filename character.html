@@ -89,6 +89,14 @@
     let currentQuill = null;
     let currentPageId = null;
 
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
+    function getIsAdmin() {
+        return auth.currentUser?.email === ADMIN_EMAIL;
+    }
+
     async function uploadFile(file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -782,7 +790,7 @@
         });
     }
 
-    // обновляем существующий onAuthStateChanged
+    // onAuthStateChanged
     const existingAuthBtn = document.getElementById("authButtons");
     onAuthStateChanged(auth, async (user) => {
         const authButtons = document.getElementById("authButtons");
@@ -792,12 +800,20 @@
         if (user) {
             isAdmin = user.email === ADMIN_EMAIL;
             loadNotifications(user.uid);
+
+            onSnapshot(doc(db, "users", user.uid), async (snap) => {
+                if (snap.exists() && snap.data().blocked) {
+                    await signOut(auth);
+                    window.location.href = "login.html";
+                }
+            });
+
             authButtons.innerHTML = `
-                ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
-                <button class="notif-bell" id="notifBell">🔔 <span class="notif-count" id="notifCount" style="display:none">0</span></button>
-                <a href="profile.html" class="nav-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted)">Профиль</a>
-                <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
-            `;
+            ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
+            <button class="notif-bell" id="notifBell">🔔 <span class="notif-count" id="notifCount" style="display:none">0</span></button>
+            <a href="profile.html" class="nav-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted)">Профиль</a>
+            <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
+        `;
             document.getElementById("logoutBtn")?.addEventListener("click", async () => {
                 await signOut(auth);
                 window.location.reload();
@@ -809,7 +825,7 @@
             form.style.display = "none";
             loginMsg.style.display = "block";
         }
-        loadComments(user);
+        await loadComments(user);
     });
 
     document.getElementById("sendCommentBtn").addEventListener("click", async () => {
