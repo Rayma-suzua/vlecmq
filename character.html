@@ -89,14 +89,6 @@
     let currentQuill = null;
     let currentPageId = null;
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
-    function getIsAdmin() {
-        return auth.currentUser?.email === ADMIN_EMAIL;
-    }
-
     async function uploadFile(file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -983,6 +975,22 @@
             '<span class="spoiler hidden" onclick="this.classList.toggle(\'hidden\')">$1</span>'
         );
     }
+
+    // секретная страница
+    let _clickCount = 0;
+    let _clickTimer = null;
+    document.addEventListener("click", () => {
+        _clickCount++;
+        if (_clickCount === 3) {
+            _clickCount = 0;
+            clearTimeout(_clickTimer);
+            showSecretModal();
+        } else {
+            clearTimeout(_clickTimer);
+            _clickTimer = setTimeout(() => { _clickCount = 0; }, 500);
+        }
+    });
+
 
 </script>
 </body>

@@ -1071,6 +1071,22 @@
         );
     }
 
+    // секретная страница
+    let _clickCount = 0;
+    let _clickTimer = null;
+    document.addEventListener("click", () => {
+        _clickCount++;
+        if (_clickCount === 3) {
+            _clickCount = 0;
+            clearTimeout(_clickTimer);
+            showSecretModal();
+        } else {
+            clearTimeout(_clickTimer);
+            _clickTimer = setTimeout(() => { _clickCount = 0; }, 500);
+        }
+    });
+
+
 </script>
 <footer class="footer">
     © 2026 Rayma Suzua/Rintarocan (Рэйма Сузуя/Ринтаросан). Все персонажи, миры, текстовые материалы и произведения являются интеллектуальной собственностью автора.<br>
