@@ -22,8 +22,9 @@ body {
     font-family: 'Segoe UI', sans-serif;
     min-height: 100vh;
 }
+/*--------------------------------------------*/
 
-/* AUTH */
+/* АУТЕНТИФИКАЦИЯ */
 .auth-container {
     display: flex;
     justify-content: center;
@@ -115,6 +116,7 @@ body {
     text-align: center;
     min-height: 18px;
 }
+/*--------------------------------------------*/
 
 /* HEADER */
 .header {
@@ -201,6 +203,7 @@ body {
     color: var(--text-muted);
     font-size: 14px;
 }
+/*--------------------------------------------*/
 
 /* HERO */
 .hero {
@@ -226,8 +229,9 @@ body {
     font-size: 18px;
     color: var(--text-muted);
 }
+/*--------------------------------------------*/
 
-/* WORKS */
+/* ПРОИЗВЕДЕНИЯ */
 .works-section {
     max-width: 1200px;
     margin: 0 auto;
@@ -309,8 +313,9 @@ body {
     color: var(--text-muted);
     font-size: 15px;
 }
+/*--------------------------------------------*/
 
-/* ADMIN */
+/* АДМИН */
 .admin-layout {
     display: flex;
     min-height: calc(100vh - 64px);
@@ -464,6 +469,7 @@ body {
     font-size: 13px;
     color: var(--text-muted);
 }
+/*--------------------------------------------*/
 
 /* QUILL OVERRIDES */
 .ql-toolbar {
@@ -512,9 +518,9 @@ body {
     background: #ff4f4f;
     color: #fff;
 }
+/*--------------------------------------------*/
 
-
-/* WORK PAGE */
+/* СТРАНИЦА ПРОИЗВЕДЕНИЯ */
 .work-hero {
     position: relative;
     height: 360px;
@@ -687,6 +693,7 @@ body {
     min-height: 300px;
     color: var(--text);
 }
+/*--------------------------------------------*/
 
 /* IMAGE SETTINGS POPUP */
 .img-popup {
@@ -748,6 +755,7 @@ body {
     border-color: var(--error);
     color: var(--error);
 }
+/*--------------------------------------------*/
 
 /* Стили картинок в тексте */
 .page-body img, .ql-editor img {
@@ -781,8 +789,9 @@ img.img-right {
     float: right;
     margin: 0 0 16px 16px;
 }
+/*--------------------------------------------*/
 
-/* GLOSSARY */
+/* ГЛОССАРИЙ */
 .glossary-layout {
     max-width: 800px;
     margin: 0 auto;
@@ -843,6 +852,7 @@ img.img-right {
     line-height: 1.7;
     margin-top: 8px;
 }
+/*--------------------------------------------*/
 
 /* TOOLTIPS */
 .term-link {
@@ -883,8 +893,9 @@ img.img-right {
     color: var(--border);
     margin-top: 6px;
 }
+/*--------------------------------------------*/
 
-/* FOOTER */
+/* ФУТЕР */
 .footer {
     border-top: 1px solid var(--border);
     padding: 24px;
@@ -899,6 +910,7 @@ img.img-right {
     color: var(--accent);
     text-decoration: none;
 }
+/*--------------------------------------------*/
 
 /* DRAG AND DROP */
 .drag-handle {
@@ -913,7 +925,7 @@ img.img-right {
     opacity: 0.4;
     border-color: var(--accent) !important;
 }
-
+/*--------------------------------------------*/
 
 /* ABOUT */
 .about-section {
@@ -954,8 +966,9 @@ img.img-right {
     color: var(--text-muted);
     line-height: 1.8;
 }
+/*--------------------------------------------*/
 
-/* UNIVERSES */
+/* ВСЕЛЕННЫЕ */
 .universe-section {
     height: 100vh;
     background-size: cover;
@@ -1041,8 +1054,9 @@ img.img-right {
     margin-bottom: 6px;
     font-weight: 600;
 }
+/*--------------------------------------------*/
 
-/* CHARACTERS */
+/* ПЕРСОНАЖИ */
 .chars-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -1117,8 +1131,9 @@ img.img-right {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+/*--------------------------------------------*/
 
-/* CODE COLORS */
+/* ЦВЕТА КОДОВ */
 .code-err { color: #ff4f4f; }
 .code-del { color: #ff4f4f; }
 .code-act { color: #4caf50; }
@@ -1126,8 +1141,9 @@ img.img-right {
 .code-dead { color: #ff4f4f; }
 .code-idle { color: #888; }
 .code-custom { }
+/*--------------------------------------------*/
 
-/* SECRET MODAL */
+/* ОКНО СЕКРЕТНОЙ СТРАНИЦЫ */
 .secret-modal {
     position: fixed;
     inset: 0;
@@ -1221,85 +1237,160 @@ img.img-right {
 .page-body .ql-indent-1 { padding-left: 3em; }
 .page-body .ql-indent-2 { padding-left: 6em; }
 .page-body .ql-indent-3 { padding-left: 9em; }
+/*--------------------------------------------*/
 
-/* SIDEBAR SECTIONS */
+/* СЕКЦИИ САЙДБАРА */
+/* --- КНОПКА-СТРЕЛКА (ВСЕГДА ВИДНА) --- */
+.sidebar-toggle-btn {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 101;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    color: var(--accent);
+    padding: 16px 8px;
+    cursor: pointer;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.4);
+    transition: background 0.2s, padding 0.2s;
+}
+
+.sidebar-toggle-btn:hover {
+    background: var(--bg-input);
+    padding-right: 12px;
+}
+
+.arrow-icon {
+    display: inline-block;
+    font-size: 14px;
+    transition: transform 0.3s ease;
+}
+
+/* --- ВЫДВИЖНОЙ САЙДБАР (ПК-ВЕРСИЯ) --- */
+.work-sidebar {
+    position: fixed;
+    top: 64px; /* высота вашего header */
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    background: rgba(19, 19, 43, 0.95);
+    backdrop-filter: blur(12px);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    z-index: 100;
+    overflow-y: auto;
+
+    /* Скрываем за левым краем экрана */
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Открытие сайдбара при наведении на сам сайдбар или на стрелочку */
+.work-sidebar:hover,
+.sidebar-toggle-btn:hover + .work-sidebar,
+.work-sidebar.active {
+    transform: translateX(0);
+}
+
+/* Поворачиваем стрелку при открытии */
+.work-sidebar:hover ~ .sidebar-toggle-btn .arrow-icon,
+.sidebar-toggle-btn:hover .arrow-icon,
+.work-sidebar.active ~ .sidebar-toggle-btn .arrow-icon {
+    transform: rotate(180deg);
+}
+
+/* --- ОФОРМЛЕНИЕ ЭЛЕМЕНТОВ МЕНЮ --- */
+.sidebar-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+    padding-left: 8px;
+}
+
 .sidebar-section {
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .sidebar-section-header {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 8px;
+    gap: 8px;
+    padding: 8px 10px;
     border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.sidebar-section-header:hover {
     background: var(--bg-input);
 }
 
-.sidebar-section-toggle {
-    background: none;
-    border: none;
-    color: var(--accent);
-    cursor: pointer;
-    font-size: 10px;
-    padding: 0 4px;
-    flex-shrink: 0;
-}
-
 .sidebar-section-title {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text);
     flex: 1;
 }
 
-.sidebar-section-add-page,
-.sidebar-section-add-sub,
-.sidebar-section-delete {
+.sidebar-section-content {
+    padding-left: 14px;
+    margin-left: 10px;
+    border-left: 2px solid var(--border);
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.page-nav-btn {
+    display: block;
+    width: 100%;
     background: none;
     border: none;
-    cursor: pointer;
-    font-size: 11px;
-    padding: 2px 4px;
-    border-radius: 4px;
     color: var(--text-muted);
-    transition: color 0.2s, background 0.2s;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    margin-bottom: 2px;
 }
 
-.sidebar-section-add-page:hover,
-.sidebar-section-add-sub:hover {
+.page-nav-btn:hover {
+    background: var(--bg-input);
+    color: var(--text);
+}
+
+.page-nav-btn.active {
+    background: rgba(79, 110, 247, 0.15);
     color: var(--accent);
-    background: var(--bg-card);
+    font-weight: 600;
 }
 
-.sidebar-section-delete:hover {
-    color: var(--error);
-    background: var(--bg-card);
-}
+/* --- МОБИЛЬНАЯ АДАПТАЦИЯ (экран до 768px) --- */
+@media (max-width: 768px) {
+    .work-sidebar {
+        top: 0;
+        width: 80%; /* Занимает 80% ширины мобильного экрана */
+        max-width: 300px;
+    }
 
-.sidebar-section-content {
-    padding-left: 12px;
-    border-left: 1px solid var(--border);
-    margin-left: 12px;
-}
+    /* Заранее разворачиваем основной контент во всю ширину */
+    .work-layout {
+        flex-direction: column;
+    }
 
-.add-section-form,
-.add-page-form {
-    padding: 8px;
-    background: var(--bg-card);
-    border-radius: 8px;
-    margin: 4px 0;
+    .work-content {
+        padding: 20px 16px;
+    }
 }
-
-.add-section-btn {
-    color: var(--accent) !important;
-    font-size: 12px !important;
-    opacity: 0.7;
-}
-
-.add-section-btn:hover {
-    opacity: 1;
-}
+/*--------------------------------------------*/
 
 /* UNIVERSE TABS */
 .universe-tabs {
@@ -1343,8 +1434,9 @@ img.img-right {
 .tab-content.active {
     display: block;
 }
+/*--------------------------------------------*/
 
-/* LAWS */
+/* ЗАКОНЫ */
 .laws-container {
     display: flex;
     flex-direction: column;
@@ -1471,6 +1563,7 @@ img.img-right {
     flex-direction: column;
     gap: 12px;
 }
+/*--------------------------------------------*/
 
 /* GLITCH TEXT */
 .glitch {
@@ -1530,8 +1623,9 @@ img.img-right {
     font-weight: 700;
     color: #ff4f4f;
 }
+/*--------------------------------------------*/
 
-/* SPOILER */
+/* СПОЙЛЕР */
 .spoiler {
     background: var(--bg-input);
     border-radius: 4px;
@@ -1564,8 +1658,9 @@ img.img-right {
     font-weight: 700;
     color: #a8baed
 }
+/*--------------------------------------------*/
 
-/* COMMENTS */
+/* КОММЫ */
 .comments-section {
     border-top: 1px solid var(--border);
     padding: 48px 40px;
@@ -1689,6 +1784,7 @@ img.img-right {
 
 .comment-delete-btn:hover { color: var(--error); }
 .comment-edit-btn:hover { color: var(--accent); }
+/*--------------------------------------------*/
 
 /* ОТВЕТЫ */
 .replies-container {
@@ -1729,8 +1825,9 @@ img.img-right {
     margin-bottom: 12px;
     min-height: 80px;
 }
+/*--------------------------------------------*/
 
-/* PROFILE */
+/* ПРОФИЛЬ */
 .profile-layout {
     display: flex;
     max-width: 1000px;
@@ -1812,8 +1909,9 @@ img.img-right {
 .profile-main {
     flex: 1;
 }
+/*--------------------------------------------*/
 
-/* BOOKMARK */
+/* БУКМАРК */
 .bookmark-btn {
     background: none;
     border: none;
@@ -1834,8 +1932,9 @@ img.img-right {
     opacity: 1;
     filter: drop-shadow(0 0 4px var(--accent));
 }
+/*--------------------------------------------*/
 
-/* NOTIFICATIONS */
+/* УВЕДЫ */
 .notif-bell {
     background: none;
     border: none;
@@ -1906,6 +2005,7 @@ img.img-right {
 }
 
 .notif-clear:hover { background: var(--bg-input); }
+/*--------------------------------------------*/
 
 /* УНИЧТОЖЕНИЕ ЕБЛИВОЙ ЧЁРТОЧКИ */
 a.comment-name, a.comment-avatar {
@@ -1915,6 +2015,7 @@ a.comment-name, a.comment-avatar {
 a.comment-name:hover {
     color: var(--accent);
 }
+/*--------------------------------------------*/
 
 /* спойлер комм */
 .comment-spoiler-btn {
@@ -1932,3 +2033,30 @@ a.comment-name:hover {
     border-color: var(--accent);
     color: var(--accent);
 }
+/*--------------------------------------------*/
+
+/* СКРОЛЛБАР */
+html {
+    scrollbar-color: #4a5568 #1a202c;
+    scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a202c;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+}
+/*--------------------------------------------*/

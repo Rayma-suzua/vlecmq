@@ -30,6 +30,10 @@
 </div>
 
 <div class="work-layout">
+    <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Открыть меню">
+        <span class="arrow-icon">❯</span>
+    </button>
+
     <aside class="work-sidebar">
         <h3 class="sidebar-title">Страницы</h3>
         <div id="pagesList"></div>
@@ -981,7 +985,7 @@
     let _clickTimer = null;
     document.addEventListener("click", () => {
         _clickCount++;
-        if (_clickCount === 3) {
+        if (_clickCount === 5) {
             _clickCount = 0;
             clearTimeout(_clickTimer);
             showSecretModal();
