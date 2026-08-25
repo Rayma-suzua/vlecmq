@@ -10,17 +10,84 @@
     --bg-input: #1a1a35;
     --accent: #4f6ef7;
     --accent-hover: #6b85ff;
-    --text: #e8e8f0;
+    --text: #d8d8e5;
     --text-muted: #8888aa;
     --border: #2a2a4a;
     --error: #ff4f4f;
+
+    --font-main: 'Mulish', sans-serif;
+    --font-title: 'Lora', serif;
 }
 
 body {
     background-color: var(--bg);
     color: var(--text);
-    font-family: 'Segoe UI', sans-serif;
+    font-family: var(--font-main);
+    font-size: 16px;
+    line-height: 1.65;
     min-height: 100vh;
+}
+
+h1, h2, h3, h4,
+.character-name,
+.title,
+.section-title,
+.nav-logo {
+    font-family: var(--font-title) !important;
+    font-weight: 700;
+}
+/*--------------------------------------------*/
+
+/* СТИЛИ ТЕКСТА ОПИСАНИЯ */
+.work-content {
+    flex: 1;
+    min-width: 0;
+    padding: 40px 24px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.work-content > * {
+    width: 100%;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.page-body {
+    max-width: 780px;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--text);
+}
+
+.page-body p {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    margin-bottom: 1.4rem;
+    color: #e2e2ee;
+}
+
+.page-body p a {
+    color: var(--accent-hover);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--accent);
+    transition: all 0.2s ease;
+}
+
+.page-body p a:hover {
+    color: #ffffff;
+    border-bottom-style: solid;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 600px) {
+    main, .content, .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
 }
 /*--------------------------------------------*/
 
@@ -1240,7 +1307,7 @@ img.img-right {
 /*--------------------------------------------*/
 
 /* СЕКЦИИ САЙДБАРА */
-/* --- КНОПКА-СТРЕЛКА (ВСЕГДА ВИДНА) --- */
+/*  кнопка-стрелка */
 .sidebar-toggle-btn {
     position: fixed;
     top: 50%;
@@ -1272,7 +1339,7 @@ img.img-right {
 /* --- ВЫДВИЖНОЙ САЙДБАР (ПК-ВЕРСИЯ) --- */
 .work-sidebar {
     position: fixed;
-    top: 64px; /* высота вашего header */
+    top: 64px;
     left: 0;
     bottom: 0;
     width: 260px;
@@ -1283,20 +1350,17 @@ img.img-right {
     z-index: 100;
     overflow-y: auto;
 
-    /* Скрываем за левым краем экрана */
     transform: translateX(-100%);
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 8px 0 32px rgba(0, 0, 0, 0.5);
 }
 
-/* Открытие сайдбара при наведении на сам сайдбар или на стрелочку */
 .work-sidebar:hover,
 .sidebar-toggle-btn:hover + .work-sidebar,
 .work-sidebar.active {
     transform: translateX(0);
 }
 
-/* Поворачиваем стрелку при открытии */
 .work-sidebar:hover ~ .sidebar-toggle-btn .arrow-icon,
 .sidebar-toggle-btn:hover .arrow-icon,
 .work-sidebar.active ~ .sidebar-toggle-btn .arrow-icon {
@@ -1373,15 +1437,14 @@ img.img-right {
     font-weight: 600;
 }
 
-/* --- МОБИЛЬНАЯ АДАПТАЦИЯ (экран до 768px) --- */
+/* МОБИЛЬНАЯ АДАПТАЦИЯ */
 @media (max-width: 768px) {
     .work-sidebar {
         top: 0;
-        width: 80%; /* Занимает 80% ширины мобильного экрана */
+        width: 80%;
         max-width: 300px;
     }
 
-    /* Заранее разворачиваем основной контент во всю ширину */
     .work-layout {
         flex-direction: column;
     }
