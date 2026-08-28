@@ -161,7 +161,9 @@
       <input type="text" id="charName" class="auth-input" placeholder="Имя персонажа">
       <input type="text" id="charCode" class="auth-input" placeholder="Код (необязательно, напр. VL-01)">
       <input type="text" id="charRole" class="auth-input" placeholder="Роль / группа (напр. Верховный Дракон)">
+      <input type="text" id="charTags" class="auth-input" placeholder="Теги через запятую">
       <textarea id="charDesc" class="auth-input admin-textarea" placeholder="Короткое описание"></textarea>
+
       <select id="charUniverse" class="auth-input admin-select">
         <option value="">— Выбери вселенную —</option>
       </select>
@@ -861,6 +863,14 @@
     const charCode = document.getElementById("charCode").value.trim();
     const charRole = document.getElementById("charRole").value.trim();
     const charDesc = document.getElementById("charDesc").value.trim();
+    const charTags = document.getElementById("charTags").value.trim();
+    const tags = charTags ? charTags.split(",").map(t => t.trim()).filter(Boolean) : [];
+
+    await addDoc(collection(db, "characters"), {
+      name: charName, code: charCode, role: charRole, description: charDesc,
+      universeId, portrait: portraitUrl, tags,
+      createdAt: serverTimestamp()
+    });
     const universeId = document.getElementById("charUniverse").value;
     const portraitFile = document.getElementById("charPortrait").files[0];
     const errorEl = document.getElementById("characterError");
@@ -882,6 +892,7 @@
       document.getElementById("charCode").value = "";
       document.getElementById("charRole").value = "";
       document.getElementById("charDesc").value = "";
+      document.getElementById("charTags").value = "";
       document.getElementById("charUniverse").value = "";
       document.getElementById("charPortrait").value = "";
       document.getElementById("charPortraitPreview").style.display = "none";

@@ -2166,3 +2166,102 @@ html {
     margin: 16px 0;
 }
 /*--------------------------------------------*/
+/*ПОИСК В ЮНИВЕРС*/
+.universe-search-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 24px;
+    right: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    z-index: 100;
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+}
+
+.search-result-item:hover {
+    background: var(--bg-input);
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.search-result-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.search-result-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+/*--------------------------------------------*/
+
+/*ОКНО ПЕРСОНАЖЕЙ В ЮНИВЁРС/ФИЛЬТР*/
+.universe-tab-wrap {
+    position: relative;
+}
+
+.chars-filter-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px;
+    z-index: 100;
+    min-width: 200px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.chars-filter-btn {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.chars-filter-btn:hover, .chars-filter-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--bg-card);
+}
+/*--------------------------------------------*/
