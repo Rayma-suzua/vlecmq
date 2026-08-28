@@ -866,11 +866,6 @@
     const charTags = document.getElementById("charTags").value.trim();
     const tags = charTags ? charTags.split(",").map(t => t.trim()).filter(Boolean) : [];
 
-    await addDoc(collection(db, "characters"), {
-      name: charName, code: charCode, role: charRole, description: charDesc,
-      universeId, portrait: portraitUrl, tags,
-      createdAt: serverTimestamp()
-    });
     const universeId = document.getElementById("charUniverse").value;
     const portraitFile = document.getElementById("charPortrait").files[0];
     const errorEl = document.getElementById("characterError");
@@ -881,9 +876,10 @@
       errorEl.textContent = "Сохраняем...";
       let portraitUrl = "";
       if (portraitFile) portraitUrl = await uploadFile(portraitFile);
+
       await addDoc(collection(db, "characters"), {
         name: charName, code: charCode, role: charRole, description: charDesc,
-        universeId, portrait: portraitUrl,
+        universeId, portrait: portraitUrl, tags,
         createdAt: serverTimestamp()
       });
       errorEl.style.color = "#4caf50";
