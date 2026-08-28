@@ -210,7 +210,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, where, deleteDoc, doc, getDoc, updateDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
@@ -806,10 +806,48 @@
         saveBtn.textContent = "Сохранить страницу";
         delete saveBtn.dataset.editId;
       } else {
-        await addDoc(collection(db, "pages"), { ...pageData, createdAt: serverTimestamp() });
+        const newPage = await addDoc(collection(db, "pages"), { ...pageData, createdAt: serverTimestamp() });
         errorEl.style.color = "#4caf50";
         errorEl.textContent = "Страница сохранена!";
+
+// Уведомления пользователям
+        if (workId) {
+          const bookmarksSnap = await getDocs(query(collection(db, "bookmarks"), where("workId", "==", workId)));
+          const workSnap = await getDoc(doc(db, "works", workId));
+          const workTitle = workSnap.exists() ? workSnap.data().title : "";
+          const notifPromises = [];
+          bookmarksSnap.forEach(b => {
+            notifPromises.push(addDoc(collection(db, "notifications"), {
+              userId: b.data().userId,
+              type: "update",
+              text: `Новая страница "${title}" в "${workTitle}"`,
+              link: `work.html?id=${workId}&page=${newPage.id}`,
+              read: false,
+              createdAt: new Date()
+            }));
+          });
+          await Promise.all(notifPromises);
+        }
+
+        if (characterId) {
+          const bookmarksSnap = await getDocs(query(collection(db, "bookmarks"), where("characterId", "==", characterId)));
+          const charSnap = await getDoc(doc(db, "characters", characterId));
+          const charName = charSnap.exists() ? charSnap.data().name : "";
+          const notifPromises = [];
+          bookmarksSnap.forEach(b => {
+            notifPromises.push(addDoc(collection(db, "notifications"), {
+              userId: b.data().userId,
+              type: "update",
+              text: `Новая страница "${title}" у персонажа "${charName}"`,
+              link: `character.html?id=${characterId}&page=${newPage.id}`,
+              read: false,
+              createdAt: new Date()
+            }));
+          });
+          await Promise.all(notifPromises);
+        }
       }
+
       document.getElementById("pageTitle").value = "";
       quill.root.innerHTML = "";
     } catch (e) {
