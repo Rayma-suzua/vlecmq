@@ -449,7 +449,7 @@
             YoutubeBlot.tagName = "div";
             YoutubeBlot.className = "youtube-embed";
             Quill.register(YoutubeBlot);
-
+            //------------------------------------------------
             currentQuill = new Quill("#inlineEditor", {
                 theme: "snow",
                 modules: {
@@ -464,6 +464,7 @@
                             ["glitch"],
                             ["spoiler"],
                             ["youtube"],
+                            ["divider"],
                             ["clean"]
                         ],
                         handlers: {
@@ -502,6 +503,11 @@
 
                                 const range = this.quill.getSelection() || { index: 0 };
                                 this.quill.insertEmbed(range.index, "youtube-embed", videoId);
+                                this.quill.insertText(range.index + 1, "\n");
+                            },
+                            divider: function() {
+                                const range = this.quill.getSelection() || { index: 0 };
+                                this.quill.insertEmbed(range.index, "divider", true);
                                 this.quill.insertText(range.index + 1, "\n");
                             }
                         }

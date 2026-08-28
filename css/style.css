@@ -2146,3 +2146,23 @@ html {
     pointer-events: all;
 }
 /*--------------------------------------------*/
+/*ТУЛБАР (ПОЛОСКА)*/
+.ql-divider::after {
+    content: "—";
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.page-body hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+}
+
+.ql-editor hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+}
+/*--------------------------------------------*/
