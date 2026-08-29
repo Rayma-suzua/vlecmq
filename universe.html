@@ -33,7 +33,7 @@
 
 <!-- ПОИСК -->
 <div class="universe-search-wrap">
-  <input type="text" id="universeSearch" class="auth-input" placeholder="Поиск по произведениям и персонажам..." style="max-width:500px;margin:24px auto;display:block">
+  <input type="text" id="universeSearch" class="auth-input" placeholder="Поиск по произведениям и персонажам..." style="max-width:1200px;margin:24px auto;display:block">
   <div id="searchResults" class="search-results" style="display:none"></div>
 </div>
 
@@ -41,12 +41,7 @@
 <div class="universe-tabs">
   <button class="universe-tab active" data-tab="works">Произведения</button>
   <div class="universe-tab-wrap">
-    <button class="universe-tab" data-tab="chars">Персонажи</button>
-    <div class="chars-filter-dropdown" id="charsFilterDropdown" style="display:none">
-      <div class="chars-filter-inner" id="charsFilterInner">
-        <button class="chars-filter-btn active" data-tag="">Все</button>
-      </div>
-    </div>
+    <button class="universe-tab" data-tab="chars">Персонажи ▾</button>
   </div>
   <button class="universe-tab" data-tab="laws">Вселенские законы</button>
 </div>
@@ -59,7 +54,12 @@
 </section>
 
 <!-- ПЕРСОНАЖИ -->
-<section class="tab-content" id="tab-chars">
+<section class="tab-content" id="tab-chars" style="position: relative;">
+  <div class="chars-filter-dropdown" id="charsFilterDropdown" style="display:none">
+    <div class="chars-filter-inner" id="charsFilterInner">
+      <button class="chars-filter-btn active" data-tag="">Все</button>
+    </div>
+  </div>
   <div class="chars-grid" id="charsGrid">
     <p class="loading-text">Загрузка...</p>
   </div>
@@ -199,13 +199,17 @@
     });
 
     // показать/скрыть dropdown при наведении
-    const tabWrap = document.querySelector(".universe-tab-wrap");
+    const charsTab = document.querySelector('[data-tab="chars"]');
     const dropdown = document.getElementById("charsFilterDropdown");
 
-    tabWrap?.addEventListener("mouseenter", () => {
-      if (allTags.size > 0) dropdown.style.display = "flex";
+    charsTab?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (allTags.size > 0) {
+        dropdown.style.display = dropdown.style.display === "none" ? "flex" : "none";
+      }
     });
-    tabWrap?.addEventListener("mouseleave", () => {
+
+    document.addEventListener("click", () => {
       dropdown.style.display = "none";
     });
   }
@@ -229,7 +233,7 @@
     const worksSnap = await getDocs(query(collection(db, "works"), where("universeId", "==", universeId)));
     worksSnap.forEach(d => {
       const w = d.data();
-      if (w.title?.toLowerCase().includes(q) || w.description?.toLowerCase().includes(q)) {
+      if (w.title?.toLowerCase().includes(q)) {
         found.push({ type: "work", id: d.id, title: w.title, sub: w.description, cover: w.cover });
       }
     });
@@ -238,7 +242,7 @@
     const charsSnap = await getDocs(query(collection(db, "characters"), where("universeId", "==", universeId)));
     charsSnap.forEach(d => {
       const c = d.data();
-      if (c.name?.toLowerCase().includes(q) || c.role?.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q)) {
+      if (c.name?.toLowerCase().includes(q)) {
         found.push({ type: "char", id: d.id, title: c.name, sub: c.role, cover: c.portrait });
       }
     });
@@ -272,22 +276,42 @@
 
   // загрузка законов
   let lawsLoaded = false;
+  let allLaws = [];
+  let currentLawPage = 1;
+  const lawsPerPage = 10;
+
   async function loadLaws() {
     if (lawsLoaded) return;
-    lawsLoaded = false;
 
     const container = document.getElementById("lawsContainer");
     container.innerHTML = "";
 
-    const snapshot = await getDocs(query(collection(db, "laws"), where("universeId", "==", universeId)));
-    const laws = [];
-    snapshot.forEach(d => laws.push({ id: d.id, ...d.data() }));
-    laws.sort((a, b) => (a.number || 0) - (b.number || 0));
+    const snapshot = await getDocs(
+            query(collection(db, "laws"), where("universeId", "==", universeId))
+    );
+
+    allLaws = [];
+    snapshot.forEach(d => allLaws.push({ id: d.id, ...d.data() }));
+
+    allLaws.sort((a, b) => (a.number || 0) - (b.number || 0));
+
+    currentLawPage = 1;
+    renderLawsPage();
+
+    lawsLoaded = true;
+  }
+
+  function renderLawsPage() {
+    const container = document.getElementById("lawsContainer");
+    container.innerHTML = "";
 
     const list = document.createElement("div");
     list.className = "laws-container";
 
-    laws.forEach(law => {
+    const start = (currentLawPage - 1) * lawsPerPage;
+    const pageLaws = allLaws.slice(start, start + lawsPerPage);
+
+    pageLaws.forEach(law => {
       list.appendChild(createLawCard(law));
     });
 
@@ -295,32 +319,75 @@
       const addBtn = document.createElement("button");
       addBtn.className = "add-law-btn";
       addBtn.textContent = "+ Добавить закон";
+
       addBtn.addEventListener("click", () => {
         if (list.querySelector(".law-form")) return;
         list.insertBefore(createLawForm(null, list), addBtn);
       });
+
       list.appendChild(addBtn);
     }
 
     container.appendChild(list);
-    lawsLoaded = true;
+
+    const totalPages = Math.ceil(allLaws.length / lawsPerPage);
+
+    if (totalPages > 1) {
+      const pagination = document.createElement("div");
+      pagination.className = "laws-pagination";
+
+      pagination.innerHTML = `
+      <button class="law-page-btn" ${currentLawPage === 1 ? "disabled" : ""}>←</button>
+      <span class="law-page-info">${currentLawPage} / ${totalPages}</span>
+      <button class="law-page-btn" ${currentLawPage === totalPages ? "disabled" : ""}>→</button>
+    `;
+
+      pagination.children[0].onclick = () => {
+        currentLawPage--;
+        renderLawsPage();
+      };
+
+      pagination.children[2].onclick = () => {
+        currentLawPage++;
+        renderLawsPage();
+      };
+
+      container.appendChild(pagination);
+
+      const cards = document.querySelectorAll(".law-card");
+
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("show");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, {
+        threshold: 0.1
+      });
+
+      cards.forEach(card => observer.observe(card));
+
+    }
   }
 
   function createLawCard(law) {
     const card = document.createElement("div");
     card.className = "law-card";
     card.id = `law-${law.id}`;
+
     card.innerHTML = `
-        <div class="law-number">ЗАКОН ${law.number || ""}</div>
-        <div class="law-title">${law.title || ""}</div>
-        <div class="law-text">${law.text || ""}</div>
-        ${isAdmin ? `
-            <div class="law-actions">
-                <button class="law-edit-btn">Редактировать</button>
-                <button class="law-delete-btn">Удалить</button>
-            </div>
-        ` : ""}
-    `;
+    <div class="law-number">ЗАКОН ${law.number || ""}</div>
+    <div class="law-title">${law.title || ""}</div>
+    <div class="law-text">${law.text || ""}</div>
+    ${isAdmin ? `
+      <div class="law-actions">
+        <button class="law-edit-btn">Редактировать</button>
+        <button class="law-delete-btn">Удалить</button>
+      </div>
+    ` : ""}
+  `;
 
     if (isAdmin) {
       card.querySelector(".law-edit-btn").addEventListener("click", () => {
@@ -328,58 +395,88 @@
         card.parentNode.insertBefore(form, card);
         card.style.display = "none";
       });
+
       card.querySelector(".law-delete-btn").addEventListener("click", async () => {
         if (!confirm("Удалить закон?")) return;
+
         await deleteDoc(doc(db, "laws", law.id));
-        card.remove();
+
+        allLaws = allLaws.filter(l => l.id !== law.id);
+        renderLawsPage();
       });
     }
+
     return card;
   }
 
   function createLawForm(law, container) {
     const form = document.createElement("div");
     form.className = "law-form";
+
     form.innerHTML = `
-        <input type="number" class="auth-input" id="lawNumber" placeholder="Номер закона" value="${law?.number || ""}">
-        <input type="text" class="auth-input" id="lawTitle" placeholder="Название закона" value="${law?.title || ""}">
-        <textarea class="auth-input admin-textarea" id="lawText" placeholder="Текст закона">${law?.text || ""}</textarea>
-        <div style="display:flex;gap:8px">
-            <button class="auth-btn" id="saveLawBtn">${law ? "Обновить" : "Сохранить"}</button>
-            <button class="nav-btn logout-btn" id="cancelLawBtn">Отмена</button>
-        </div>
-    `;
+    <input type="number" class="auth-input" id="lawNumber" placeholder="Номер закона" value="${law?.number || ""}">
+    <input type="text" class="auth-input" id="lawTitle" placeholder="Название закона" value="${law?.title || ""}">
+    <textarea class="auth-input admin-textarea" id="lawText" placeholder="Текст закона">${law?.text || ""}</textarea>
+    <div style="display:flex;gap:8px">
+      <button class="auth-btn" id="saveLawBtn">${law ? "Обновить" : "Сохранить"}</button>
+      <button class="nav-btn logout-btn" id="cancelLawBtn">Отмена</button>
+    </div>
+  `;
 
     form.querySelector("#cancelLawBtn").addEventListener("click", () => {
       form.remove();
-      if (law) document.getElementById(`law-${law.id}`).style.display = "block";
+
+      if (law) {
+        document.getElementById(`law-${law.id}`).style.display = "block";
+      }
     });
 
     form.querySelector("#saveLawBtn").addEventListener("click", async () => {
       const number = parseInt(form.querySelector("#lawNumber").value);
       const title = form.querySelector("#lawTitle").value.trim();
       const text = form.querySelector("#lawText").value.trim();
+
       if (!title) return;
 
       if (law) {
-        await updateDoc(doc(db, "laws", law.id), { number, title, text });
-        law.number = number;
-        law.title = title;
-        law.text = text;
-        const oldCard = document.getElementById(`law-${law.id}`);
-        const newCard = createLawCard(law);
-        container.insertBefore(newCard, form);
-        form.remove();
-        oldCard.remove();
+        await updateDoc(doc(db, "laws", law.id), {
+          number,
+          title,
+          text
+        });
+
+        const index = allLaws.findIndex(l => l.id === law.id);
+
+        if (index !== -1) {
+          allLaws[index] = {
+            ...allLaws[index],
+            number,
+            title,
+            text
+          };
+        }
       } else {
         const newDoc = await addDoc(collection(db, "laws"), {
-          number, title, text, universeId, createdAt: new Date()
+          number,
+          title,
+          text,
+          universeId,
+          createdAt: new Date()
         });
-        const newCard = createLawCard({ id: newDoc.id, number, title, text });
-        container.insertBefore(newCard, form);
-        form.remove();
+
+        allLaws.push({
+          id: newDoc.id,
+          number,
+          title,
+          text
+        });
+
+        allLaws.sort((a, b) => (a.number || 0) - (b.number || 0));
       }
-      lawsLoaded = false;
+
+      form.remove();
+      renderLawsPage();
+      lawsLoaded = true;
     });
 
     return form;
@@ -390,7 +487,7 @@
   let _clickTimer = null;
   document.addEventListener("click", () => {
     _clickCount++;
-    if (_clickCount === 3) {
+    if (_clickCount === 10) {
       _clickCount = 0;
       clearTimeout(_clickTimer);
       showSecretModal();

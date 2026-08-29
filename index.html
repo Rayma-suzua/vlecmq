@@ -205,7 +205,7 @@
     let _clickTimer = null;
     document.addEventListener("click", () => {
         _clickCount++;
-        if (_clickCount === 3) {
+        if (_clickCount === 10) {
             _clickCount = 0;
             clearTimeout(_clickTimer);
             showSecretModal();

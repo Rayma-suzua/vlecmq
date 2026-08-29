@@ -22,7 +22,7 @@
 </header>
 
 <div class="profile-layout">
-
+  <a href="index.html" class="back-link">← Назад</a>
   <!-- ЛЕВАЯ ЧАСТЬ АВАТАРКА И НИК -->
   <aside class="profile-sidebar">
     <div class="profile-avatar-wrap">
@@ -99,7 +99,6 @@
     const authButtons = document.getElementById("authButtons");
     authButtons.innerHTML = `
             ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
-            <a href="profile.html" class="nav-btn">Профиль</a>
         `;
 
     // данные пользователя

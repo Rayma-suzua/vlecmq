@@ -305,7 +305,7 @@
             container.appendChild(sectionEl);
 
             // открыть/закрыть раздел
-            sectionHeader.querySelector(".sidebar-section-toggle").addEventListener("click", () => {
+            sectionHeader.addEventListener("click", () => {
                 const isOpen = sectionContent.style.display !== "none";
                 sectionContent.style.display = isOpen ? "none" : "block";
                 sectionHeader.querySelector(".sidebar-section-toggle").textContent = isOpen ? "▶" : "▼";
@@ -1151,7 +1151,7 @@
     let _clickTimer = null;
     document.addEventListener("click", () => {
         _clickCount++;
-        if (_clickCount === 3) {
+        if (_clickCount === 10) {
             _clickCount = 0;
             clearTimeout(_clickTimer);
             showSecretModal();
