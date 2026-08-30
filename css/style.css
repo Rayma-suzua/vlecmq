@@ -1911,11 +1911,32 @@ img.img-right {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .comment-reply {
     display: flex;
     gap: 10px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.comment-reply .comment-body {
+    min-width: 0;
+    flex: 1;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.comment-reply .comment-header {
+    flex-wrap: wrap;
+}
+
+.replies-container .replies-container {
+    padding-left: 0;
+    border-left: none;
 }
 
 .reply-form {

@@ -799,10 +799,18 @@
                 list.innerHTML += renderComment(c, currentUser);
             });
 
+            //корневой комментарий для каждого ответа
+            function getRootComment(commentId, allComments) {
+                const comment = allComments.find(c => c.id === commentId);
+                if (!comment || !comment.parentId) return commentId;
+                return getRootComment(comment.parentId, allComments);
+            }
+
             replies.forEach(r => {
-                const parent = document.getElementById(`comment-${r.parentId}`);
-                if (parent) {
-                    const body = parent.querySelector(".comment-body");
+                const rootId = getRootComment(r.parentId, allComments);
+                const rootEl = document.getElementById(`comment-${rootId}`);
+                if (rootEl) {
+                    const body = rootEl.querySelector(".comment-body");
                     let repliesContainer = body.querySelector(".replies-container");
                     if (!repliesContainer) {
                         repliesContainer = document.createElement("div");
