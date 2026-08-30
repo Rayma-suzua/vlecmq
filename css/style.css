@@ -1169,6 +1169,11 @@ img.img-right {
     padding: 12px;
 }
 
+.chars-grid {
+    flex: 1;
+    min-width: 0;
+}
+
 .char-card-code {
     font-size: 11px;
     color: var(--accent);
@@ -2366,6 +2371,11 @@ html {
     transition: background 0.2s;
     font-size: 13px;
     color: var(--text-muted);
+}
+
+.chars-grid:empty::after,
+.chars-grid .loading-text {
+    grid-column: 1 / -1;
 }
 
 .chars-filter-tag:hover {

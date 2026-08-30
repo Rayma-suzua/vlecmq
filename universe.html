@@ -279,7 +279,7 @@
     `).join("");
   });
 
-  // переключение вкладок
+  //переключение вкладок
   document.querySelectorAll(".universe-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".universe-tab").forEach(t => t.classList.remove("active"));
@@ -290,7 +290,7 @@
     });
   });
 
-  // загрузка законов
+  //загрузка законов
   let lawsLoaded = false;
   let allLaws = [];
   let currentLawPage = 1;
@@ -498,7 +498,7 @@
     return form;
   }
 
-  // секретная страница
+  //секретная страница
   let _clickCount = 0;
   let _clickTimer = null;
   document.addEventListener("click", () => {
