@@ -2285,42 +2285,119 @@ html {
 /*--------------------------------------------*/
 
 /*ДРОПДАУД ТЭГОВ ПЕРСОВ*/
-.universe-tab-wrap {
+/* CHARS FILTER PANEL */
+.chars-layout {
+    display: flex;
+    gap: 0;
+    align-items: flex-start;
     position: relative;
 }
 
-.chars-filter-dropdown {
-    position: absolute;
-    top: 0;
-    right: 0;
+.chars-filter-panel {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    position: sticky;
+    top: 80px;
+    margin-left: 8px;
+}
+
+.chars-filter-toggle {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 20px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.chars-filter-toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.chars-filter-content {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 8px;
-    z-index: 100;
-    width: 220px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    padding: 16px;
+    width: 200px;
+    margin-right: 8px;
+    order: -1;
+    animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.chars-filter-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.chars-filter-inner {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
+    margin-bottom: 12px;
 }
 
-.chars-filter-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 14px;
+.chars-filter-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
-    transition: all 0.2s;
-    text-align: left;
-    width: 100%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    font-size: 13px;
+    color: var(--text-muted);
 }
 
-.chars-filter-btn:hover, .chars-filter-btn.active {
+.chars-filter-tag:hover {
     background: var(--bg-input);
+    color: var(--text);
+}
+
+.chars-filter-tag input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 14px;
+    height: 14px;
+}
+
+.chars-filter-tag.checked {
     color: var(--accent);
+}
+
+.chars-filter-reset {
+    width: 100%;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.chars-filter-reset:hover {
+    border-color: var(--error);
+    color: var(--error);
 }
 /*--------------------------------------------*/
 /*СТРЕЛКА НАЗАД*/

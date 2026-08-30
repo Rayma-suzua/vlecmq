@@ -41,7 +41,7 @@
 <div class="universe-tabs">
   <button class="universe-tab active" data-tab="works">Произведения</button>
   <div class="universe-tab-wrap">
-    <button class="universe-tab" data-tab="chars">Персонажи ▾</button>
+    <button class="universe-tab" data-tab="chars">Персонажи</button>
   </div>
   <button class="universe-tab" data-tab="laws">Вселенские законы</button>
 </div>
@@ -54,14 +54,19 @@
 </section>
 
 <!-- ПЕРСОНАЖИ -->
-<section class="tab-content" id="tab-chars" style="position: relative;">
-  <div class="chars-filter-dropdown" id="charsFilterDropdown" style="display:none">
-    <div class="chars-filter-inner" id="charsFilterInner">
-      <button class="chars-filter-btn active" data-tag="">Все</button>
+<section class="tab-content" id="tab-chars">
+  <div class="chars-layout">
+    <div class="chars-grid" id="charsGrid">
+      <p class="loading-text">Загрузка...</p>
     </div>
-  </div>
-  <div class="chars-grid" id="charsGrid">
-    <p class="loading-text">Загрузка...</p>
+    <div class="chars-filter-panel" id="charsFilterPanel">
+      <button class="chars-filter-toggle" id="charsFilterToggle">☷</button>
+      <div class="chars-filter-content" id="charsFilterContent" style="display:none">
+        <div class="chars-filter-title">Фильтр по тегам</div>
+        <div id="charsFilterInner" class="chars-filter-inner"></div>
+        <button class="chars-filter-reset" id="charsFilterReset">Сбросить</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -154,65 +159,76 @@
     charsSnap.forEach(d => chars.push({ id: d.id, ...d.data() }));
     chars.sort((a, b) => a.name.localeCompare(b.name));
 
-    //все теги
     const allTags = new Set();
     chars.forEach(c => (c.tags || []).forEach(t => allTags.add(t)));
 
-    //теги в фильтр
     const filterInner = document.getElementById("charsFilterInner");
-    if (filterInner && allTags.size > 0) {
+    let activeTags = new Set();
+
+    if (allTags.size > 0) {
       allTags.forEach(tag => {
-        filterInner.innerHTML += `<button class="chars-filter-btn" data-tag="${tag}">${tag}</button>`;
+        const label = document.createElement("label");
+        label.className = "chars-filter-tag";
+        label.innerHTML = `
+                <input type="checkbox" value="${tag}">
+                ${tag}
+            `;
+        label.querySelector("input").addEventListener("change", (e) => {
+          if (e.target.checked) {
+            activeTags.add(tag);
+            label.classList.add("checked");
+          } else {
+            activeTags.delete(tag);
+            label.classList.remove("checked");
+          }
+          renderChars();
+        });
+        filterInner.appendChild(label);
       });
+    } else {
+      document.getElementById("charsFilterPanel").style.display = "none";
     }
 
-    let activeTag = "";
+    function renderChars() {
+      const filtered = activeTags.size > 0
+              ? chars.filter(c => [...activeTags].every(t => (c.tags || []).includes(t)))
+              : chars;
 
-    function renderChars(tag) {
-      const filtered = tag ? chars.filter(c => (c.tags || []).includes(tag)) : chars;
-      charsGrid.innerHTML = filtered.map(c => `
-            <a href="character.html?id=${c.id}" class="char-card">
-                <div class="char-portrait-wrap">
-                    ${c.portrait ? `<img src="${c.portrait}" class="char-portrait">` : `<div class="char-portrait-empty"></div>`}
-                </div>
-                <div class="char-info">
-                    ${c.code ? `<div class="char-card-code">${c.code}</div>` : ""}
-                    <div class="char-card-name">${c.name}</div>
-                    <div class="char-card-role">${c.role || ""}</div>
-                    <div class="char-card-desc">${c.description || ""}</div>
-                </div>
-            </a>
-        `).join("");
+      charsGrid.innerHTML = filtered.length === 0
+              ? `<p class="loading-text">Никого не найдено</p>`
+              : filtered.map(c => `
+                <a href="character.html?id=${c.id}" class="char-card">
+                    <div class="char-portrait-wrap">
+                        ${c.portrait ? `<img src="${c.portrait}" class="char-portrait">` : `<div class="char-portrait-empty"></div>`}
+                    </div>
+                    <div class="char-info">
+                        ${c.code ? `<div class="char-card-code">${c.code}</div>` : ""}
+                        <div class="char-card-name">${c.name}</div>
+                        <div class="char-card-role">${c.role || ""}</div>
+                        <div class="char-card-desc">${c.description || ""}</div>
+                    </div>
+                </a>
+            `).join("");
     }
 
-    renderChars("");
+    renderChars();
 
-    //фильтр по тегу я ебу сколько тегов
-    document.getElementById("charsFilterInner")?.addEventListener("click", (e) => {
-      const btn = e.target.closest(".chars-filter-btn");
-      if (!btn) return;
-      document.querySelectorAll(".chars-filter-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      activeTag = btn.dataset.tag;
-      renderChars(activeTag);
-      document.getElementById("charsFilterDropdown").style.display = "none";
+    //показать/скрыть панель
+    document.getElementById("charsFilterToggle").addEventListener("click", () => {
+      const content = document.getElementById("charsFilterContent");
+      content.style.display = content.style.display === "none" ? "block" : "none";
     });
 
-    // показать/скрыть dropdown при наведении
-    const charsTab = document.querySelector('[data-tab="chars"]');
-    const dropdown = document.getElementById("charsFilterDropdown");
-
-    charsTab?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (allTags.size > 0) {
-        dropdown.style.display = dropdown.style.display === "none" ? "flex" : "none";
-      }
-    });
-
-    document.addEventListener("click", () => {
-      dropdown.style.display = "none";
+    //сброс фильтров
+    document.getElementById("charsFilterReset").addEventListener("click", () => {
+      activeTags.clear();
+      filterInner.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
+      filterInner.querySelectorAll(".chars-filter-tag").forEach(l => l.classList.remove("checked"));
+      renderChars();
     });
   }
+
+
 
   //поиск
   document.getElementById("universeSearch").addEventListener("input", async (e) => {
