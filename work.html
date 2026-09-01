@@ -440,6 +440,16 @@
             <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
         </div>
         <div class="page-body" id="pageBody">${page.content}</div>
+        <div class="page-update-info">
+            <div class="page-update-line"></div>
+            <span>
+                Обновлено: ${
+            page.updatedAt
+                ? page.updatedAt.toDate().toLocaleDateString("ru-RU")
+                : page.createdAt?.toDate?.().toLocaleDateString("ru-RU") || ""
+        }
+            </span>
+        </div>
         ${auth.currentUser?.email === ADMIN_EMAIL ? `
             <div class="edit-toolbar" id="editToolbar" style="display:none">
                 <div id="inlineEditor"></div>
@@ -666,7 +676,7 @@
                     a.parentNode.replaceChild(span, a);
                 });
                 const newContent = tempDiv.innerHTML.replace(/\t/g, '&nbsp;&nbsp;&nbsp;');
-                await updateDoc(doc(db, "pages", currentPageId), { content: newContent });
+                await updateDoc(doc(db, "pages", currentPageId), { content: newContent, updatedAt: new Date() });
                 page.content = newContent;
                 document.getElementById("pageBody").innerHTML = newContent;
                 setTimeout(() => initTooltips(db, "#pageBody"), 100);
