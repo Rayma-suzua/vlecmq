@@ -362,11 +362,6 @@
         ${page.cover ? `<img src="${page.cover}" class="page-cover-img">` : ""}
         <div class="page-header-row">
             <h1 class="page-title">${page.title}</h1>
-            ${page.updatedAt ? `
-                <span class="page-updated">
-                    ${page.updatedAt.toDate().toLocaleDateString("ru-RU")}
-                </span>
-            ` : ""}
             ${auth.currentUser?.email === ADMIN_EMAIL ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
             <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
         </div>
@@ -378,7 +373,7 @@
             page.updatedAt?.toDate
                 ? page.updatedAt.toDate().toLocaleDateString("ru-RU")
                 : "—"
-        }
+                }
             </span>
         </div>
         ${auth.currentUser?.email === ADMIN_EMAIL ? `
