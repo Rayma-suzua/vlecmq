@@ -441,13 +441,13 @@
         </div>
         <div class="page-body" id="pageBody">${page.content}</div>
         <div class="page-update-info">
-            <div class="page-update-line"></div>
-            <span>
+        <div class="page-update-line"></div>
+        <span>
                 Обновлено: ${
-            page.updatedAt
-                ? page.updatedAt.toDate().toLocaleDateString("ru-RU")
-                : page.createdAt?.toDate?.().toLocaleDateString("ru-RU") || ""
-        }
+                    page.updatedAt?.toDate
+                        ? page.updatedAt.toDate().toLocaleDateString("ru-RU")
+                        : "—"
+                }
             </span>
         </div>
         ${auth.currentUser?.email === ADMIN_EMAIL ? `
