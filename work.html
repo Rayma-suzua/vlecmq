@@ -50,25 +50,22 @@
 <section class="comments-section">
     <div class="comments-inner">
         <h2 class="comments-title">Комментарии</h2>
-        <div id="commentsList" class="comments-list"></div>
-        <div id="commentForm" style="display:none">
-            <textarea id="commentText" class="auth-input admin-textarea" placeholder="Написать комментарий..."></textarea>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-                <button class="comment-spoiler-btn" id="commentSpoilerBtn" title="Спойлер">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
-                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
-                        <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
-                        <line x1="2" x2="22" y1="2" y2="22"></line>
-                    </svg>
-                </button>
-                <span style="font-size:12px;color:var(--text-muted)">Выдели текст и нажми</span>
+
+        <div id="commentForm" class="comment-form-box" style="display:none">
+            <textarea id="commentText" class="comment-textarea" placeholder="Написать комментарий..."></textarea>
+            <div class="comment-form-actions">
+                <button class="comment-spoiler-btn" id="commentSpoilerBtn" title="Спойлер">👁</button>
+                <div style="flex:1"></div>
+                <button class="comment-cancel-btn" id="cancelCommentBtn">Отмена</button>
+                <button class="auth-btn" id="sendCommentBtn" style="padding:6px 18px;font-size:13px">Отправить</button>
             </div>
-            <button class="auth-btn" id="sendCommentBtn">Отправить</button>
         </div>
+
         <p id="commentLoginMsg" class="loading-text" style="display:none">
             <a href="login.html" style="color:var(--accent)">Войдите</a> чтобы оставить комментарий
         </p>
+
+        <div id="commentsList" class="comments-list"></div>
     </div>
 </section>
 
@@ -454,7 +451,7 @@
             </div>
         ` : ""}
     `;
-
+        //РЕДАКТОР АДМИНА
         initBookmark(page.id, workId);
         if (auth.currentUser?.email !== ADMIN_EMAIL) return;
 
@@ -464,6 +461,11 @@
             document.getElementById("editInlineBtn").style.display = "none";
 
             const editorEl = document.getElementById("inlineEditor");
+
+            document.querySelectorAll("#editToolbar .ql-toolbar").forEach(toolbar => {
+                toolbar.remove();
+            });
+
             const newEditorEl = document.createElement("div");
             newEditorEl.id = "inlineEditor";
             editorEl.parentNode.replaceChild(newEditorEl, editorEl);
@@ -674,8 +676,6 @@
                 currentQuill = null;
                 currentQuill = null;
                 errorEl.textContent = "";
-                // Перезагружаем страницу сохраняя URL
-                setTimeout(() => window.location.reload(), 500);
             } catch (e) {
                 errorEl.style.color = "var(--error)";
                 errorEl.textContent = e.message;
@@ -904,15 +904,32 @@
                 const commentEl = document.getElementById(`comment-${parentId}`);
                 if (commentEl.querySelector(".reply-form")) return;
                 const form = document.createElement("div");
-                form.className = "reply-form";
+                form.className = "comment-form-box";
+                form.style.marginTop = "8px";
                 form.innerHTML = `
-                <textarea class="auth-input" style="min-height:60px;margin-top:8px" placeholder="Ответ для ${parentName}..."></textarea>
-                <div style="display:flex;gap:8px;margin-top:8px">
-                    <button class="auth-btn send-reply-btn" style="padding:6px 14px;font-size:13px">Отправить</button>
-                    <button class="nav-btn logout-btn cancel-reply-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
-                </div>
-            `;
+                    <textarea class="comment-textarea reply-textarea" placeholder="Ответ для ${parentName}..." style="min-height:40px"></textarea>
+                    <div class="comment-form-actions">
+                        <button class="comment-spoiler-btn reply-spoiler-btn" title="Спойлер">👁</button>
+                        <div style="flex:1"></div>
+                        <button class="comment-cancel-btn cancel-reply-btn">Отмена</button>
+                        <button class="auth-btn send-reply-btn" style="padding:6px 18px;font-size:13px">Ответить</button>
+                    </div>
+                `;
                 commentEl.after(form);
+                const replyTextarea = form.querySelector(".reply-textarea");
+                replyTextarea.addEventListener("input", () => {
+                    replyTextarea.style.height = "auto";
+                    replyTextarea.style.height = replyTextarea.scrollHeight + "px";
+                });
+
+                //спойлер
+                form.querySelector(".reply-spoiler-btn")?.addEventListener("click", () => {
+                    const start = replyTextarea.selectionStart;
+                    const end = replyTextarea.selectionEnd;
+                    const selected = replyTextarea.value.substring(start, end);
+                    if (!selected) return;
+                    replyTextarea.value = replyTextarea.value.substring(0, start) + `[spoiler]${selected}[/spoiler]` + replyTextarea.value.substring(end);
+                });
                 form.querySelector(".cancel-reply-btn").addEventListener("click", () => form.remove());
                 form.querySelector(".send-reply-btn").addEventListener("click", async () => {
                     const text = form.querySelector("textarea").value.trim();
@@ -984,6 +1001,18 @@
                 window.location.reload();
             });
             form.style.display = "block";
+            //автоматическое расширение блока текста
+            const textarea = document.getElementById("commentText");
+            textarea.addEventListener("input", () => {
+                textarea.style.height = "auto";
+                textarea.style.height = textarea.scrollHeight + "px";
+            });
+
+            //кнопка отмены
+            document.getElementById("cancelCommentBtn")?.addEventListener("click", () => {
+                textarea.value = "";
+                textarea.style.height = "auto";
+            });
             loginMsg.style.display = "none";
         } else {
             authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;

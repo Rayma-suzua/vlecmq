@@ -57,18 +57,22 @@
 <section class="comments-section">
     <div class="comments-inner">
         <h2 class="comments-title">Комментарии</h2>
-        <div id="commentsList" class="comments-list"></div>
-        <div id="commentForm" style="display:none">
-            <textarea id="commentText" class="auth-input admin-textarea" placeholder="Написать комментарий..."></textarea>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-                <button class="comment-spoiler-btn" id="commentSpoilerBtn">[ спойлер ]</button>
-                <span style="font-size:12px;color:var(--text-muted)">Выдели текст и нажми</span>
+
+        <div id="commentForm" class="comment-form-box" style="display:none">
+            <textarea id="commentText" class="comment-textarea" placeholder="Написать комментарий..."></textarea>
+            <div class="comment-form-actions">
+                <button class="comment-spoiler-btn" id="commentSpoilerBtn" title="Спойлер">👁</button>
+                <div style="flex:1"></div>
+                <button class="comment-cancel-btn" id="cancelCommentBtn">Отмена</button>
+                <button class="auth-btn" id="sendCommentBtn" style="padding:6px 18px;font-size:13px">Отправить</button>
             </div>
-            <button class="auth-btn" id="sendCommentBtn">Отправить</button>
         </div>
+
         <p id="commentLoginMsg" class="loading-text" style="display:none">
             <a href="login.html" style="color:var(--accent)">Войдите</a> чтобы оставить комментарий
         </p>
+
+        <div id="commentsList" class="comments-list"></div>
     </div>
 </section>
 
@@ -155,26 +159,30 @@
         const pages = [];
         pagesSnap.forEach(d => pages.push({ id: d.id, ...d.data() }));
         pages.sort((a, b) => a.createdAt?.seconds - b.createdAt?.seconds);
-        // Загружаем разделы и страницы вместе
+
+        // загрузка разделов и страницы вместе
         const sectionsSnap = await getDocs(query(collection(db, "sections"), where("characterId", "==", charId)));
         const sections = [];
         sectionsSnap.forEach(d => sections.push({ id: d.id, ...d.data() }));
         sections.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
 
-        await renderSidebar(pagesList, pages, sections, null, null, charId);
+        await renderSidebar(pagesList, pages, sections, null, charId, null);
 
+        // автооткрытие страницы из URL или первой страницы
         const targetPageId = new URLSearchParams(window.location.search).get("page");
         if (targetPageId) {
             const targetPage = pages.find(p => p.id === targetPageId);
             if (targetPage) {
-                loadPage(targetPage);
+                const btn = pagesList.querySelector(`[data-page-id="${targetPageId}"]`);
+                if (btn) btn.click();
+                else loadPage(targetPage);
             }
         } else if (pages.length > 0) {
             const firstRootPage = pages.find(p => !p.sectionId) || pages[0];
             loadPage(firstRootPage);
         }
-
-        if (auth.currentUser?.email === ADMIN_EMAIL) {
+        const currentUser = auth.currentUser;
+        if (currentUser?.email === ADMIN_EMAIL) {
             const addRootSection = document.createElement("button");
             addRootSection.className = "page-nav-btn add-section-btn";
             addRootSection.textContent = "+ Добавить раздел";
@@ -185,7 +193,7 @@
     }
 
 
-    async function renderSidebar(container, pages, sections, parentId, workId, characterId) {
+    async function renderSidebar(container, pages, sections, parentId, charId, characterId) {
         // показываем страницы без раздела (только на корневом уровне)
         if (parentId === null) {
             const rootPages = pages.filter(p => !p.sectionId);
@@ -227,13 +235,13 @@
             });
 
             // подразделы рекурсивно
-            await renderSidebar(sectionContent, pages, sections, section.id, workId, characterId);
+            await renderSidebar(sectionContent, pages, sections, section.id, charId, characterId);
 
             sectionEl.appendChild(sectionContent);
             container.appendChild(sectionEl);
 
             // открыть/закрыть раздел
-            sectionHeader.querySelector(".sidebar-section-toggle").addEventListener("click", () => {
+            sectionHeader.addEventListener("click", () => {
                 const isOpen = sectionContent.style.display !== "none";
                 sectionContent.style.display = isOpen ? "none" : "block";
                 sectionHeader.querySelector(".sidebar-section-toggle").textContent = isOpen ? "▶" : "▼";
@@ -243,12 +251,12 @@
                 sectionHeader.querySelector(".sidebar-section-add-page").addEventListener("click", () => {
                     sectionContent.style.display = "block";
                     sectionHeader.querySelector(".sidebar-section-toggle").textContent = "▼";
-                    showAddPageForm(sectionContent, section.id, workId, characterId, pages, sections);
+                    showAddPageForm(sectionContent, section.id, charId, characterId, pages, sections);
                 });
                 sectionHeader.querySelector(".sidebar-section-add-sub").addEventListener("click", () => {
                     sectionContent.style.display = "block";
                     sectionHeader.querySelector(".sidebar-section-toggle").textContent = "▼";
-                    showAddSectionForm(sectionContent, section.id, workId, characterId, pages, sections);
+                    showAddSectionForm(sectionContent, section.id, null, charId, pages, sections);
                 });
                 sectionHeader.querySelector(".sidebar-section-delete").addEventListener("click", async () => {
                     if (!confirm("Удалить раздел?")) return;
@@ -301,7 +309,7 @@
         });
     }
 
-    function showAddPageForm(container, sectionId, workId, characterId, pages, sections) {
+    function showAddPageForm(container, sectionId, charId, characterId, pages, sections) {
         const existing = container.querySelector(".add-page-form");
         if (existing) { existing.remove(); return; }
 
@@ -320,8 +328,7 @@
             const title = input.value.trim();
             if (!title) return;
             const pageData = { title, content: "", sectionId, createdAt: new Date() };
-            if (workId) pageData.workId = workId;
-            if (characterId) pageData.characterId = characterId;
+            if (charId) pageData.characterId = charId;
             const newPage = await addDoc(collection(db, "pages"), pageData);
 
             // уведомление пользователей
@@ -380,11 +387,17 @@
         if (auth.currentUser?.email !== ADMIN_EMAIL) return;
 
         document.getElementById("editInlineBtn").addEventListener("click", () => {
+            if (currentQuill) return;
             document.getElementById("pageBody").style.display = "none";
             document.getElementById("editToolbar").style.display = "block";
             document.getElementById("editInlineBtn").style.display = "none";
 
             const editorEl = document.getElementById("inlineEditor");
+
+            document.querySelectorAll("#editToolbar .ql-toolbar").forEach(toolbar => {
+                toolbar.remove();
+            });
+
             const newEditorEl = document.createElement("div");
             newEditorEl.id = "inlineEditor";
             editorEl.parentNode.replaceChild(newEditorEl, editorEl);
@@ -594,10 +607,7 @@
                 document.getElementById("editToolbar").style.display = "none";
                 document.getElementById("editInlineBtn").style.display = "inline-block";
                 currentQuill = null;
-                currentQuill = null;
                 errorEl.textContent = "";
-                // Перезагружаем страницу сохраняя URL
-                setTimeout(() => window.location.reload(), 500);
             } catch (e) {
                 errorEl.style.color = "var(--error)";
                 errorEl.textContent = e.message;
@@ -693,8 +703,8 @@
 
         const q = query(
             collection(db, "comments"),
-            where("characterId", "==", charId),
-            orderBy("createdAt", "asc")
+            where("charId", "==", charId),
+            orderBy("createdAt", "desc")
         );
 
         onSnapshot(q, (snap) => {
@@ -818,15 +828,32 @@
                 const commentEl = document.getElementById(`comment-${parentId}`);
                 if (commentEl.querySelector(".reply-form")) return;
                 const form = document.createElement("div");
-                form.className = "reply-form";
+                form.className = "comment-form-box";
+                form.style.marginTop = "8px";
                 form.innerHTML = `
-                <textarea class="auth-input" style="min-height:60px;margin-top:8px" placeholder="Ответ для ${parentName}..."></textarea>
-                <div style="display:flex;gap:8px;margin-top:8px">
-                    <button class="auth-btn send-reply-btn" style="padding:6px 14px;font-size:13px">Отправить</button>
-                    <button class="nav-btn logout-btn cancel-reply-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
-                </div>
-            `;
+                    <textarea class="comment-textarea reply-textarea" placeholder="Ответ для ${parentName}..." style="min-height:40px"></textarea>
+                    <div class="comment-form-actions">
+                        <button class="comment-spoiler-btn reply-spoiler-btn" title="Спойлер">👁</button>
+                        <div style="flex:1"></div>
+                        <button class="comment-cancel-btn cancel-reply-btn">Отмена</button>
+                        <button class="auth-btn send-reply-btn" style="padding:6px 18px;font-size:13px">Ответить</button>
+                    </div>
+                `;
                 commentEl.after(form);
+                const replyTextarea = form.querySelector(".reply-textarea");
+                replyTextarea.addEventListener("input", () => {
+                    replyTextarea.style.height = "auto";
+                    replyTextarea.style.height = replyTextarea.scrollHeight + "px";
+                });
+
+                //спойлер
+                form.querySelector(".reply-spoiler-btn")?.addEventListener("click", () => {
+                    const start = replyTextarea.selectionStart;
+                    const end = replyTextarea.selectionEnd;
+                    const selected = replyTextarea.value.substring(start, end);
+                    if (!selected) return;
+                    replyTextarea.value = replyTextarea.value.substring(0, start) + `[spoiler]${selected}[/spoiler]` + replyTextarea.value.substring(end);
+                });
                 form.querySelector(".cancel-reply-btn").addEventListener("click", () => form.remove());
                 form.querySelector(".send-reply-btn").addEventListener("click", async () => {
                     const text = form.querySelector("textarea").value.trim();
@@ -894,6 +921,18 @@
                 window.location.reload();
             });
             form.style.display = "block";
+            //автоматическое расширение блока текста
+            const textarea = document.getElementById("commentText");
+            textarea.addEventListener("input", () => {
+                textarea.style.height = "auto";
+                textarea.style.height = textarea.scrollHeight + "px";
+            });
+
+            //кнопка отмены
+            document.getElementById("cancelCommentBtn")?.addEventListener("click", () => {
+                textarea.value = "";
+                textarea.style.height = "auto";
+            });
             loginMsg.style.display = "none";
         } else {
             authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;
@@ -1000,11 +1039,6 @@
                 bell.onclick = () => showNotifications(snap.docs, userId);
             }
         });
-
-        document.getElementById("notifBell")?.addEventListener("click", async () => {
-            // Показываем список уведомлений
-            showNotifications(snap.docs, userId);
-        });
     }
 
     function showNotifications(docs, userId) {
@@ -1064,7 +1098,7 @@
     let _clickTimer = null;
     document.addEventListener("click", () => {
         _clickCount++;
-        if (_clickCount === 5) {
+        if (_clickCount === 10) {
             _clickCount = 0;
             clearTimeout(_clickTimer);
             showSecretModal();
