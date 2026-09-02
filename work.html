@@ -791,7 +791,7 @@
         const q = query(
             collection(db, "comments"),
             where("workId", "==", workId),
-            orderBy("createdAt", "asc")
+            orderBy("createdAt", "desc")
         );
 
         onSnapshot(q, (snap) => {

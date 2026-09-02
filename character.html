@@ -708,7 +708,7 @@
 
         const q = query(
             collection(db, "comments"),
-            where("charId", "==", charId),
+            where("characterId", "==", charId),
             orderBy("createdAt", "desc")
         );
 
