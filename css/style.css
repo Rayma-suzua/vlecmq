@@ -919,6 +919,13 @@ img.img-right {
     line-height: 1.7;
     margin-top: 8px;
 }
+
+.glossary-item {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 100px; /* подбери под реальную высоту шапки + отступ */
+}
+
 /*--------------------------------------------*/
 
 /* TOOLTIPS */
@@ -1901,6 +1908,34 @@ img.img-right {
 
 .comment-delete-btn:hover { color: var(--error); }
 .comment-edit-btn:hover { color: var(--accent); }
+/*редактор кома*/
+.comment-quill-editor .ql-toolbar {
+    border: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    background: none !important;
+    padding: 4px 10 !important;
+}
+
+.comment-quill-editor .ql-container {
+    border: none !important;
+    font-size: 14px !important;
+    min-height: 40px !important;
+}
+
+.comment-quill-editor .ql-editor {
+    min-height: 40px !important;
+    max-height: 200px !important;
+    overflow-y: auto !important;
+    padding: 6px 0 !important;
+    color: var(--text) !important;
+}
+
+.comment-quill-editor .ql-editor.ql-blank::before {
+    color: var(--text-muted) !important;
+}
+
+
+
 /*--------------------------------------------*/
 
 /* ОТВЕТЫ */

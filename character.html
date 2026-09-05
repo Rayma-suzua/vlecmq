@@ -31,7 +31,7 @@
         <p class="work-hero-desc" id="charRole"></p>
     </div>
 </div>
-
+<!-- БОКОВОЕ МЕНЮ -->
 <div class="work-layout">
     <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Открыть меню">
         <span class="arrow-icon">❯</span>
@@ -54,7 +54,7 @@
         <h2 class="comments-title">Комментарии</h2>
 
         <div id="commentForm" class="comment-form-box" style="display:none">
-            <textarea id="commentText" class="comment-textarea" placeholder="Написать комментарий..."></textarea>
+            <div id="commentEditor" class="comment-quill-editor"></div>
             <div class="comment-form-actions">
                 <button class="comment-spoiler-btn" id="commentSpoilerBtn" title="Спойлер">👁</button>
                 <div style="flex:1"></div>
@@ -70,7 +70,7 @@
         <div id="commentsList" class="comments-list"></div>
     </div>
 </section>
-
+<!-- СКРИПТ -->
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
@@ -94,7 +94,7 @@
     let isAdmin = false;
     let currentQuill = null;
     let currentPageId = null;
-
+    //загрузка картинок
     async function uploadFile(file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -107,13 +107,13 @@
         return data.secure_url;
     }
 
+    //цветные коды
     function colorizeCode(code) {
         if (!code) return "";
         const errWords = ["ERR", "DEL", "DEAD"];
         const actWords = ["ACT"];
         const idleWords = ["IDLE", "INACT"];
 
-        // Заменяем только целые токены разделённые точками и дефисами
         return code.split(".").map(segment => {
             const upper = segment.toUpperCase();
             if (errWords.includes(upper)) return `<span class="code-err">${segment}</span>`;
@@ -123,6 +123,7 @@
         }).join(".");
     }
 
+    //проверка и загрузка страницы
     const params = new URLSearchParams(window.location.search);
     const charId = params.get("id");
     if (!charId) { window.location.href = "index.html"; }
@@ -130,6 +131,7 @@
     const charDoc = await getDoc(doc(db, "characters", charId));
     if (!charDoc.exists()) { window.location.href = "index.html"; }
 
+    //отображение данных персонажа
     const char = charDoc.data();
     document.title = char.name;
     document.getElementById("charName").textContent = char.name;
@@ -147,7 +149,7 @@
             e.target.classList.toggle("hidden");
         }
     });
-
+    //если ошибка отображения (увидел знач лох. фикси код)
     if (pagesSnap.empty) {
         pagesList.innerHTML = `<p class="loading-text">Страниц пока нет</p>`;
     } else {
@@ -155,7 +157,7 @@
         pagesSnap.forEach(d => pages.push({ id: d.id, ...d.data() }));
         pages.sort((a, b) => a.createdAt?.seconds - b.createdAt?.seconds);
 
-        // загрузка разделов и страницы вместе
+        //загрузка разделов и страницы вместе
         const sectionsSnap = await getDocs(query(collection(db, "sections"), where("characterId", "==", charId)));
         const sections = [];
         sectionsSnap.forEach(d => sections.push({ id: d.id, ...d.data() }));
@@ -163,7 +165,7 @@
 
         await renderSidebar(pagesList, pages, sections, null, charId, null);
 
-        // автооткрытие страницы из URL или первой страницы
+        //автооткрытие страницы из URL или первой страницы
         const targetPageId = new URLSearchParams(window.location.search).get("page");
         if (targetPageId) {
             const targetPage = pages.find(p => p.id === targetPageId);
@@ -176,6 +178,7 @@
             const firstRootPage = pages.find(p => !p.sectionId) || pages[0];
             loadPage(firstRootPage);
         }
+        //проверка админ акка
         const currentUser = auth.currentUser;
         if (currentUser?.email === ADMIN_EMAIL) {
             const addRootSection = document.createElement("button");
@@ -187,9 +190,123 @@
 
     }
 
+    //ГЛОССАРИЙ
+    async function initTooltips(db, contentSelector) {
+        const snapshot = await getDocs(collection(db, "glossary"));
+        const terms = [];
+        snapshot.forEach(d => terms.push({ id: d.id, ...d.data() }));
+        if (terms.length === 0) return;
 
+        const container = document.querySelector(contentSelector);
+        if (!container) return;
+
+        const termById = new Map();
+        terms.forEach(term => termById.set(term.id, term));
+
+        const allForms = [];
+        terms.forEach(term => {
+            allForms.push({ pattern: term.word, term });
+            if (term.forms && term.forms.length > 0) {
+                term.forms.forEach(form => {
+                    allForms.push({ pattern: form, term });
+                });
+            }
+        });
+
+        allForms.sort((a, b) => b.pattern.length - a.pattern.length);
+
+        function escapeRegex(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        const patternMap = new Map();
+        allForms.forEach(({ pattern, term }) => {
+            patternMap.set(pattern.toLowerCase(), term);
+        });
+
+        const combinedPattern = allForms.map(f => escapeRegex(f.pattern)).join("|");
+        const combinedRegex = combinedPattern ? new RegExp(`(${combinedPattern})`, "gi") : null;
+
+        function processNode(node) {
+            if (node.nodeType === 3) {
+                if (node.parentNode && node.parentNode.classList && node.parentNode.classList.contains("term-link")) return;
+                if (!combinedRegex) return;
+
+                const text = node.textContent;
+                combinedRegex.lastIndex = 0;
+                if (!combinedRegex.test(text)) return;
+                combinedRegex.lastIndex = 0;
+
+                const html = text.replace(combinedRegex, (match) => {
+                    const term = patternMap.get(match.toLowerCase());
+                    if (!term) return match;
+                    //только id термина в атрибуте, никакого текста
+                    return `<a class="term-link" data-term-id="${term.id}" href="glossary.html#term-${term.id}">${match}</a>`;
+                });
+
+                const span = document.createElement("span");
+                span.innerHTML = html;
+                node.parentNode.replaceChild(span, node);
+            } else if (node.nodeType === 1 && !["A", "SCRIPT", "STYLE"].includes(node.tagName)) {
+                Array.from(node.childNodes).forEach(processNode);
+            }
+        }
+
+        processNode(container);
+
+        let tooltip = null;
+
+        document.addEventListener("mouseover", (e) => {
+            const link = e.target.closest(".term-link");
+            if (!link) return;
+            const term = termById.get(link.dataset.termId);
+            if (!term) return;
+
+            if (tooltip) tooltip.remove();
+            tooltip = document.createElement("div");
+            tooltip.className = "term-tooltip";
+
+            const wordDiv = document.createElement("div");
+            wordDiv.className = "term-tooltip-word";
+            wordDiv.textContent = term.word;
+
+            const descDiv = document.createElement("div");
+            descDiv.className = "term-tooltip-desc";
+            descDiv.textContent = term.short;
+
+            const hintDiv = document.createElement("div");
+            hintDiv.className = "term-tooltip-hint";
+            hintDiv.textContent = "Нажми для подробностей";
+
+            tooltip.appendChild(wordDiv);
+            tooltip.appendChild(descDiv);
+            tooltip.appendChild(hintDiv);
+            document.body.appendChild(tooltip);
+            positionTooltip(e);
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (tooltip) positionTooltip(e);
+        });
+
+        document.addEventListener("mouseout", (e) => {
+            if (e.target.closest(".term-link") && !e.relatedTarget?.closest(".term-link")) {
+                if (tooltip) { tooltip.remove(); tooltip = null; }
+            }
+        });
+
+        function positionTooltip(e) {
+            if (!tooltip) return;
+            const x = Math.min(e.clientX + 12, window.innerWidth - 300);
+            const y = e.clientY + 20;
+            tooltip.style.left = x + "px";
+            tooltip.style.top = y + "px";
+        }
+    }
+
+    //САЙДБАР
     async function renderSidebar(container, pages, sections, parentId, charId, characterId) {
-        // показываем страницы без раздела (только на корневом уровне)
+        //отображение страницы без раздела. корневой уровне
         if (parentId === null) {
             const rootPages = pages.filter(p => !p.sectionId);
             rootPages.forEach(page => {
@@ -198,7 +315,7 @@
             });
         }
 
-        // показываем разделы этого уровня
+        //отображение разделов этого уровня
         const levelSections = sections.filter(s => (s.parentId || null) === parentId);
         for (const section of levelSections) {
             const sectionEl = document.createElement("div");
@@ -222,20 +339,20 @@
             sectionContent.className = "sidebar-section-content";
             sectionContent.style.display = "none";
 
-            // страницы этого раздела
+            //страницы этого раздела
             const sectionPages = pages.filter(p => p.sectionId === section.id);
             sectionPages.forEach(page => {
                 const btn = createPageBtn(page);
                 sectionContent.appendChild(btn);
             });
 
-            // подразделы рекурсивно
+            //подразделы рекурсивно
             await renderSidebar(sectionContent, pages, sections, section.id, charId, characterId);
 
             sectionEl.appendChild(sectionContent);
             container.appendChild(sectionEl);
 
-            // открыть/закрыть раздел
+            //открыть/закрыть раздел
             sectionHeader.addEventListener("click", () => {
                 const isOpen = sectionContent.style.display !== "none";
                 sectionContent.style.display = isOpen ? "none" : "block";
@@ -261,7 +378,7 @@
             }
         }
     }
-
+    //создание кнопок навигации
     function createPageBtn(page) {
         const btn = document.createElement("button");
         btn.className = "page-nav-btn";
@@ -275,7 +392,7 @@
         });
         return btn;
     }
-
+    //отображение формы для создания нью раздела
     function showAddSectionForm(container, parentId, workId, characterId, pages, sections) {
         const existing = container.querySelector(".add-section-form");
         if (existing) { existing.remove(); return; }
@@ -299,11 +416,11 @@
             if (characterId) sectionData.characterId = characterId;
             const newDoc = await addDoc(collection(db, "sections"), sectionData);
             form.remove();
-            // перезагружаем сайдбар
+            //перезагрузка сайдбара
             window.location.reload();
         });
     }
-
+    //создание нью раздела
     function showAddPageForm(container, sectionId, charId, characterId, pages, sections) {
         const existing = container.querySelector(".add-page-form");
         if (existing) { existing.remove(); return; }
@@ -326,7 +443,7 @@
             if (charId) pageData.characterId = charId;
             const newPage = await addDoc(collection(db, "pages"), pageData);
 
-            // уведомление пользователей
+            //уведомление пользователей
             if (charId) {
                 const bookmarksSnap = await getDocs(query(
                     collection(db, "bookmarks"),
@@ -349,12 +466,11 @@
                 });
                 await Promise.all(notifPromises);
             }
-
             form.remove();
             window.location.reload();
         });
     }
-
+    //загрузка страницы
     function loadPage(page) {
         currentPageId = page.id;
         const content = document.getElementById("pageContent");
@@ -389,6 +505,7 @@
     `;
 
         initBookmark(page.id, charId);
+        //РЕДАКТОР АДМИНА
         if (auth.currentUser?.email !== ADMIN_EMAIL) return;
 
         document.getElementById("editInlineBtn").addEventListener("click", () => {
@@ -544,7 +661,7 @@
                 }
             });
 
-            // очищаем контент от тултипов и nbsp перед загрузкой в редактор
+            //очищение контента от тултипов и nbsp перед загрузкой в редактор
             const tempDiv = document.createElement("div");
             tempDiv.innerHTML = page.content || "";
             tempDiv.querySelectorAll("a.term-link").forEach(a => {
@@ -552,13 +669,13 @@
                 span.innerHTML = a.innerHTML;
                 a.parentNode.replaceChild(span, a);
             });
-            // возвращаем nbsp обратно в табуляцию для редактора
+            //обратный вруб табуляции для редактора
             currentQuill.root.innerHTML = tempDiv.innerHTML.replace(/&nbsp;&nbsp;&nbsp;/g, '\t');
 
             currentQuill.root.addEventListener("click", (e) => {
                 if (e.target.tagName === "IMG") showImgPopup(e.target, e.clientX, e.clientY);
             });
-
+            //параметры вставки изображения
             currentQuill.getModule("toolbar").addHandler("image", () => {
                 const input = document.createElement("input");
                 input.type = "file";
@@ -581,7 +698,7 @@
                 };
             });
         });
-
+        //кнопка отмены
         document.getElementById("cancelInlineBtn").addEventListener("click", () => {
             document.getElementById("pageBody").style.display = "block";
             document.getElementById("editToolbar").style.display = "none";
@@ -589,7 +706,7 @@
             closeImgPopup();
             currentQuill = null;
         });
-
+        //сохранение в бд
         document.getElementById("saveInlineBtn").addEventListener("click", async () => {
             const errorEl = document.getElementById("inlineError");
             try {
@@ -619,7 +736,7 @@
             }
         });
     }
-
+    //параметры вставленного изображения
     function showImgPopup(img, x, y) {
         closeImgPopup();
         const popup = document.createElement("div");
@@ -668,6 +785,7 @@
         if (popup) popup.remove();
     }
 
+    //блок секретной страницы
     function showSecretModal() {
         if (document.getElementById("secretModal")) return;
         const modal = document.createElement("div");
@@ -701,7 +819,15 @@
         });
     }
 
-    // КОММЕНТАРИИ
+    //клик на спойлер
+    document.getElementById("commentsList")?.addEventListener("click", (e) => {
+        const spoiler = e.target.closest(".spoiler");
+        if (spoiler) {
+            spoiler.classList.toggle("hidden");
+        }
+    });
+
+    //КОММЕНТАРИИ
     function loadComments(currentUser) {
         const list = document.getElementById("commentsList");
         list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
@@ -753,7 +879,7 @@
             initCommentListeners(list, currentUser, allComments);
         });
     }
-
+    //рендер комментариев
     function renderComment(c, currentUser, isReply = false) {
         const date = c.createdAt?.toDate?.()?.toLocaleString("ru-RU", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"}) || "";
         const isOwn = currentUser?.uid === c.userId;
@@ -782,16 +908,16 @@
         </div>
     `;
     }
-
+    //КОММЕНТАРИИ (остальные функции)
     function initCommentListeners(container, currentUser, allComments) {
         container.querySelectorAll(".comment-delete-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
                 if (!confirm("Удалить комментарий?")) return;
                 await deleteDoc(doc(db, "comments", btn.dataset.id));
-                document.getElementById(`comment-${btn.dataset.id}`).remove();
+                document.getElementById(`comment-${btn.dataset.id}`)?.remove();
             });
         });
-
+        //редактирование
         container.querySelectorAll(".comment-edit-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 const id = btn.dataset.id;
@@ -825,7 +951,7 @@
                 });
             });
         });
-
+        //ответ
         container.querySelectorAll(".comment-reply-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 const parentId = btn.dataset.id;
@@ -850,7 +976,6 @@
                     replyTextarea.style.height = "auto";
                     replyTextarea.style.height = replyTextarea.scrollHeight + "px";
                 });
-
                 //спойлер
                 form.querySelector(".reply-spoiler-btn")?.addEventListener("click", () => {
                     const start = replyTextarea.selectionStart;
@@ -878,7 +1003,7 @@
                         replyToText, replyToName,
                         createdAt: new Date()
                     });
-                    // уведа
+                    //уведа
                     const parentComment = allComments.find(c => c.id === parentId);
                     if (parentComment && parentComment.userId !== user.uid) {
                         await addDoc(collection(db, "notifications"), {
@@ -914,7 +1039,7 @@
                     window.location.href = "login.html";
                 }
             });
-
+            //кнопочкэ
             authButtons.innerHTML = `
             ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
             <button class="notif-bell" id="notifBell">🔔 <span class="notif-count" id="notifCount" style="display:none">0</span></button>
@@ -926,17 +1051,45 @@
                 window.location.reload();
             });
             form.style.display = "block";
-            //автоматическое расширение блока текста
-            const textarea = document.getElementById("commentText");
-            textarea.addEventListener("input", () => {
-                textarea.style.height = "auto";
-                textarea.style.height = textarea.scrollHeight + "px";
-            });
+
+            //спойлер
+            if (!window.spoilerRegistered) {
+                const Inline = Quill.import("blots/inline");
+                class SpoilerBlot extends Inline {
+                    static create() {
+                        const node = super.create();
+                        node.className = "spoiler hidden";
+                        node.addEventListener("click", () => node.classList.toggle("hidden"));
+                        return node;
+                    }
+                    static formats(node) {
+                        return node.classList.contains("spoiler");
+                    }
+                }
+                SpoilerBlot.blotName = "spoiler";
+                SpoilerBlot.tagName = "span";
+                Quill.register(SpoilerBlot);
+                window.spoilerRegistered = true;
+            }
+
+            //туллбар комма
+            if (!window.commentQuill) {
+                window.commentQuill = new Quill("#commentEditor", {
+                    theme: "snow",
+                    modules: {
+                        toolbar: [
+                            ["bold", "italic", "underline", "strike"],
+                            [{ align: [] }],
+                            ["clean"]
+                        ]
+                    },
+                    placeholder: "Написать комментарий..."
+                });
+            }
 
             //кнопка отмены
             document.getElementById("cancelCommentBtn")?.addEventListener("click", () => {
-                textarea.value = "";
-                textarea.style.height = "auto";
+                window.commentQuill.root.innerHTML = "";
             });
             loginMsg.style.display = "none";
         } else {
@@ -946,10 +1099,10 @@
         }
         await loadComments(user);
     });
-
+    //отправка комма
     document.getElementById("sendCommentBtn").addEventListener("click", async () => {
-        const text = document.getElementById("commentText").value.trim();
-        if (!text) return;
+        const text = window.commentQuill.root.innerHTML.trim();
+        if (!text || text === "<p><br></p>") return;
         const user = auth.currentUser;
         if (!user) return;
         const userDoc = await getDoc(doc(db, "users", user.uid));
@@ -962,21 +1115,18 @@
             link: window.location.href,
             createdAt: new Date()
         });
-        document.getElementById("commentText").value = "";
-        await loadComments(user);
+
+        window.commentQuill.root.innerHTML = "";
+        loadComments(user);
     });
 
+    //спойлер (сука сколько вас ещё)
     document.getElementById("commentSpoilerBtn")?.addEventListener("click", () => {
-        const textarea = document.getElementById("commentText");
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selected = textarea.value.substring(start, end);
-        if (!selected) return;
-        const before = textarea.value.substring(0, start);
-        const after = textarea.value.substring(end);
-        textarea.value = `${before}[spoiler]${selected}[/spoiler]${after}`;
+        const range = window.commentQuill.getSelection();
+        if (!range || range.length === 0) return;
+        window.commentQuill.format("spoiler", true);
     });
-
+    //букмарк (закладка)
     async function initBookmark(pageId, charId) {
         const user = auth.currentUser;
         const btn = document.getElementById("bookmarkBtn");
@@ -987,6 +1137,7 @@
             return;
         }
 
+        //есть ли уже закладка
         const snap = await getDocs(query(
             collection(db, "bookmarks"),
             where("userId", "==", user.uid),
@@ -1019,7 +1170,7 @@
             }
         });
     }
-
+    //УВЕДЫ
     function loadNotifications(userId) {
         const q = query(
             collection(db, "notifications"),
@@ -1045,7 +1196,7 @@
             }
         });
     }
-
+    //показ увед (дропдаун)
     function showNotifications(docs, userId) {
         const existing = document.getElementById("notifDropdown");
         if (existing) { existing.remove(); return; }
@@ -1092,9 +1243,10 @@
         }, { once: true });
     }
 
+    //клик на спойлер (старые)
     function renderCommentText(text) {
         return text.replace(/\[spoiler\](.*?)\[\/spoiler\]/gs,
-            '<span class="spoiler hidden" onclick="this.classList.toggle(\'hidden\')">$1</span>'
+            '<span class="spoiler hidden">$1</span>'
         );
     }
 
