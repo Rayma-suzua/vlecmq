@@ -2362,6 +2362,67 @@ html {
     border-top: 1px solid var(--border);
     margin: 16px 0;
 }
+/* DIVIDER STYLES */
+.page-body hr, .ql-editor hr {
+    border: none;
+    margin: 24px 0;
+}
+
+.page-body hr.divider-thin, .ql-editor hr.divider-thin {
+    border-top: 1px solid var(--border);
+}
+
+.page-body hr.divider-thick, .ql-editor hr.divider-thick {
+    border-top: 3px solid var(--border);
+}
+
+.page-body hr.divider-double, .ql-editor hr.divider-double {
+    border-top: 3px double var(--border);
+}
+
+/* DIVIDER MENU */
+.divider-menu {
+    position: fixed;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.divider-menu button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+
+.divider-menu button:hover {
+    background: var(--bg-input);
+    color: var(--text);
+}
+
+.ql-toolbar {
+    background: var(--bg-card) !important;
+    border-color: var(--border) !important;
+    border-radius: 8px 8px 0 0 !important;
+
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+}
+
+
 /*--------------------------------------------*/
 /*ПОИСК В ЮНИВЕРС*/
 .universe-search-wrap {
@@ -2423,7 +2484,7 @@ html {
 }
 /*--------------------------------------------*/
 
-/*ДРОПДАУД ТЭГОВ ПЕРСОВ*/
+/*ДРОПДАУН ТЭГОВ ПЕРСОВ*/
 .chars-layout {
     display: flex;
     gap: 0;
@@ -2596,7 +2657,7 @@ html {
 .page-update-line {
     width: 15%;
     height: 1px;
-    margin: 0 auto 10px; /* Выравнивает элемент по центру горизонтально */
+    margin: 0 auto 10px;
 
     background: linear-gradient(
             to right,

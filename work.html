@@ -572,10 +572,15 @@
             Quill.register(YoutubeBlot);
 
             class DividerBlot extends BlockEmbed {
-                static create() {
+                static create(style) {
                     const node = super.create();
                     node.setAttribute("contenteditable", "false");
+                    node.dataset.style = style || "thin";
+                    node.className = `divider-${style || "thin"}`;
                     return node;
+                }
+                static value(node) {
+                    return node.dataset.style || "thin";
                 }
             }
             DividerBlot.blotName = "divider";
@@ -638,9 +643,40 @@
                                 this.quill.insertText(range.index + 1, "\n");
                             },
                             divider: function() {
-                                const range = this.quill.getSelection() || { index: 0 };
-                                this.quill.insertEmbed(range.index, "divider", true);
-                                this.quill.insertText(range.index + 1, "\n");
+                                const quill = this.quill;
+                                const range = quill.getSelection() || { index: 0 };
+
+                                // Показываем мини-меню выбора стиля
+                                const existing = document.getElementById("dividerMenu");
+                                if (existing) { existing.remove(); return; }
+
+                                const menu = document.createElement("div");
+                                menu.id = "dividerMenu";
+                                menu.className = "divider-menu";
+                                menu.innerHTML = `
+                                    <button data-style="thin">── Тонкая</button>
+                                    <button data-style="thick">━━ Жирная</button>
+                                    <button data-style="double">═══ Двойная</button>
+                                `;
+                                document.body.appendChild(menu);
+
+                                //под кнопкой
+                                const btn = document.querySelector(".ql-divider");
+                                const rect = btn.getBoundingClientRect();
+                                menu.style.left = rect.left + "px";
+                                menu.style.top = (rect.bottom + 4) + "px";
+
+                                menu.querySelectorAll("button").forEach(b => {
+                                    b.addEventListener("click", () => {
+                                        quill.insertEmbed(range.index, "divider", b.dataset.style);
+                                        quill.insertText(range.index + 1, "\n");
+                                        menu.remove();
+                                    });
+                                });
+
+                                setTimeout(() => {
+                                    document.addEventListener("click", () => menu.remove(), { once: true });
+                                }, 0);
                             }
                         }
                     }
