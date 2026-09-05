@@ -152,6 +152,22 @@
           where("universeId", "==", universeId)
   ));
 
+  // список всех произведений сайта (общий, единый для всех вселенных)
+  const WORK_NAMES = [
+    "Очищение",
+    "Очищение: Белый Дворец",
+    "Очищение: Давно минувшие Дни",
+    "Исцеление под светом проклятой луны",
+    "Лис и Невозмутимый",
+    "Разлом Кьюэры: Галактические проблемы",
+    "Ран Чжэнь и Гуй Куан",
+    "Падение Белого Дворца",
+    "Запечатлить в Истории",
+    "Сто бед и один Юнцзюэ"
+  ];
+  const workNamesSet = new Set(WORK_NAMES.map(w => w.toLowerCase()));
+
+
   if (charsSnap.empty) {
     charsGrid.innerHTML = `<p class="loading-text">Персонажи скоро появятся...</p>`;
   } else {
@@ -162,29 +178,44 @@
     const allTags = new Set();
     chars.forEach(c => (c.tags || []).forEach(t => allTags.add(t)));
 
+    // делим теги на "обычные" и "произведения" — только те, что реально есть у персонажей этой вселенной
+    const regularTags = [...allTags].filter(t => !workNamesSet.has(t.toLowerCase())).sort((a, b) => a.localeCompare(b, "ru"));
+    const workTags = [...allTags].filter(t => workNamesSet.has(t.toLowerCase())).sort((a, b) => a.localeCompare(b, "ru"));
+
     const filterInner = document.getElementById("charsFilterInner");
     let activeTags = new Set();
 
-    if (allTags.size > 0) {
-      allTags.forEach(tag => {
-        const label = document.createElement("label");
-        label.className = "chars-filter-tag";
-        label.innerHTML = `
-                <input type="checkbox" value="${tag}">
-                ${tag}
-            `;
-        label.querySelector("input").addEventListener("change", (e) => {
-          if (e.target.checked) {
-            activeTags.add(tag);
-            label.classList.add("checked");
-          } else {
-            activeTags.delete(tag);
-            label.classList.remove("checked");
-          }
-          renderChars();
-        });
-        filterInner.appendChild(label);
+    function createTagCheckbox(tag) {
+      const label = document.createElement("label");
+      label.className = "chars-filter-tag";
+      label.innerHTML = `
+            <input type="checkbox" value="${tag}">
+            ${tag}
+        `;
+      label.querySelector("input").addEventListener("change", (e) => {
+        if (e.target.checked) {
+          activeTags.add(tag);
+          label.classList.add("checked");
+        } else {
+          activeTags.delete(tag);
+          label.classList.remove("checked");
+        }
+        renderChars();
       });
+      return label;
+    }
+
+    if (allTags.size > 0) {
+      regularTags.forEach(tag => filterInner.appendChild(createTagCheckbox(tag)));
+
+      if (workTags.length > 0) {
+        const worksTitle = document.createElement("div");
+        worksTitle.className = "chars-filter-subtitle";
+        worksTitle.textContent = "Фильтрация по произведениям";
+        filterInner.appendChild(worksTitle);
+
+        workTags.forEach(tag => filterInner.appendChild(createTagCheckbox(tag)));
+      }
     } else {
       document.getElementById("charsFilterPanel").style.display = "none";
     }
@@ -228,9 +259,7 @@
     });
   }
 
-
-
-  //поиск
+  //ПОИСК
   document.getElementById("universeSearch").addEventListener("input", async (e) => {
     const q = e.target.value.trim().toLowerCase();
     const results = document.getElementById("searchResults");
@@ -279,7 +308,7 @@
     `).join("");
   });
 
-  //переключение вкладок
+  //переключение вкладок законов
   document.querySelectorAll(".universe-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".universe-tab").forEach(t => t.classList.remove("active"));
@@ -316,7 +345,7 @@
 
     lawsLoaded = true;
   }
-
+  //рендер законов
   function renderLawsPage() {
     const container = document.getElementById("lawsContainer");
     container.innerHTML = "";
@@ -387,7 +416,7 @@
 
     }
   }
-
+  //создание законов
   function createLawCard(law) {
     const card = document.createElement("div");
     card.className = "law-card";
@@ -424,7 +453,7 @@
 
     return card;
   }
-
+  //блок закона
   function createLawForm(law, container) {
     const form = document.createElement("div");
     form.className = "law-form";

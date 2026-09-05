@@ -2424,7 +2424,6 @@ html {
 /*--------------------------------------------*/
 
 /*ДРОПДАУД ТЭГОВ ПЕРСОВ*/
-/* CHARS FILTER PANEL */
 .chars-layout {
     display: flex;
     gap: 0;
@@ -2543,6 +2542,18 @@ html {
     border-color: var(--error);
     color: var(--error);
 }
+
+.chars-filter-subtitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 12px 0 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
 /*--------------------------------------------*/
 /*СТРЕЛКА НАЗАД*/
 .back-link {
