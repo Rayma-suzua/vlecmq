@@ -106,6 +106,18 @@
         const data = await res.json();
         return data.secure_url;
     }
+    //загрузка аудио
+    async function uploadAudioFile(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "site_audio");
+        const res = await fetch("https://api.cloudinary.com/v1_1/daqefbfb/video/upload", {
+            method: "POST",
+            body: formData
+        });
+        const data = await res.json();
+        return data.secure_url;
+    }
 
     //цветные коды
     function colorizeCode(code) {
@@ -188,6 +200,81 @@
             pagesList.appendChild(addRootSection);
         }
 
+    }
+    // АУДИО ПРОИГРОВАТЕЛЬ
+    function initAudioPlayers(container) {
+        container.querySelectorAll(".custom-audio-player").forEach(player => {
+            if (player.dataset.initialized) return;
+            player.dataset.initialized = "true";
+
+            const audio = player.querySelector(".audio-source");
+            const playBtn = player.querySelector(".audio-play-btn");
+            const iconPlay = player.querySelector(".audio-icon-play");
+            const iconPause = player.querySelector(".audio-icon-pause");
+            const progressBar = player.querySelector(".audio-progress-bar");
+            const progressFill = player.querySelector(".audio-progress-fill");
+            const currentTimeEl = player.querySelector(".audio-current-time");
+            const durationEl = player.querySelector(".audio-duration");
+
+            function formatTime(sec) {
+                if (!isFinite(sec)) return "0:00";
+                const m = Math.floor(sec / 60);
+                const s = Math.floor(sec % 60).toString().padStart(2, "0");
+                return `${m}:${s}`;
+            }
+
+            const volumeSlider = player.querySelector(".audio-volume");
+
+            volumeSlider.addEventListener("input", () => {
+                audio.volume = volumeSlider.value;
+            });
+
+            audio.addEventListener("loadedmetadata", () => {
+                durationEl.textContent = formatTime(audio.duration);
+            });
+
+            playBtn.addEventListener("click", () => {
+                if (audio.paused) {
+                    document.querySelectorAll(".custom-audio-player audio").forEach(a => {
+                        if (a !== audio) a.pause();
+                    });
+                    audio.play();
+                } else {
+                    audio.pause();
+                }
+            });
+
+            audio.addEventListener("play", () => {
+                iconPlay.style.display = "none";
+                iconPause.style.display = "inline";
+            });
+
+            audio.addEventListener("pause", () => {
+                iconPlay.style.display = "inline";
+                iconPause.style.display = "none";
+            });
+
+            audio.addEventListener("timeupdate", () => {
+                const percent = (audio.currentTime / audio.duration) * 100 || 0;
+                progressFill.style.width = percent + "%";
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+                if (isFinite(audio.duration)) {
+                    durationEl.textContent = formatTime(audio.duration);
+                }
+            });
+
+            audio.addEventListener("ended", () => {
+                iconPlay.style.display = "inline";
+                iconPause.style.display = "none";
+                progressFill.style.width = "0%";
+            });
+
+            progressBar.addEventListener("click", (e) => {
+                const rect = progressBar.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                audio.currentTime = percent * audio.duration;
+            });
+        });
     }
 
     //ГЛОССАРИЙ
@@ -504,6 +591,11 @@
         ` : ""}
     `;
 
+        setTimeout(() => {
+            initTooltips(db, "#pageBody");
+            initAudioPlayers(document.getElementById("pageBody"));
+        }, 100);
+
         initBookmark(page.id, charId);
         //РЕДАКТОР АДМИНА
         if (auth.currentUser?.email !== ADMIN_EMAIL) return;
@@ -584,7 +676,42 @@
             YoutubeBlot.tagName = "div";
             YoutubeBlot.className = "youtube-embed";
             Quill.register(YoutubeBlot);
-
+            //аудио
+            class AudioBlot extends BlockEmbed {
+                static create(url) {
+                    const node = super.create();
+                    node.setAttribute("contenteditable", "false");
+                    const audioId = "audio_" + Math.random().toString(36).slice(2, 9);
+                    node.innerHTML = `
+                        <div class="custom-audio-player" data-audio-id="${audioId}">
+                            <audio class="audio-source" src="${url}" preload="metadata"></audio>
+                            <button class="audio-play-btn" type="button">
+                                <span class="audio-icon-play">▶</span>
+                                <span class="audio-icon-pause" style="display:none">⏸</span>
+                            </button>
+                            <div class="audio-progress-wrap">
+                                <div class="audio-progress-bar">
+                                    <div class="audio-progress-fill"></div>
+                                </div>
+                                <div class="audio-time">
+                                    <span class="audio-current-time">0:00</span> / <span class="audio-duration">0:00</span>
+                                </div>
+                            </div>
+                            <input type="range" class="audio-volume" min="0" max="1" step="0.01" value="1">
+                        </div>
+                    `;
+                    return node;
+                }
+                static value(node) {
+                    const audio = node.querySelector("audio");
+                    return audio ? audio.getAttribute("src") : "";
+                }
+            }
+            AudioBlot.blotName = "audio-embed";
+            AudioBlot.tagName = "div";
+            AudioBlot.className = "audio-embed";
+            Quill.register(AudioBlot);
+            //полоска
             class DividerBlot extends BlockEmbed {
                 static create(style) {
                     const node = super.create();
@@ -600,6 +727,33 @@
             DividerBlot.blotName = "divider";
             DividerBlot.tagName = "hr";
             Quill.register(DividerBlot);
+            //выпадающий текст
+            class AccordionBlot extends BlockEmbed {
+                static create(value) {
+                    const node = super.create();
+                    node.setAttribute("contenteditable", "false");
+                    node.className = "accordion-block";
+                    const summary = value?.summary || "Нажми чтобы открыть";
+                    const content = value?.content || "";
+                    node.innerHTML = `
+            <details class="accordion-details">
+                <summary class="accordion-summary">${summary}</summary>
+                <div class="accordion-content">${content}</div>
+            </details>
+        `;
+                    return node;
+                }
+                static value(node) {
+                    return {
+                        summary: node.querySelector(".accordion-summary")?.textContent || "",
+                        content: node.querySelector(".accordion-content")?.innerHTML || ""
+                    };
+                }
+            }
+            AccordionBlot.blotName = "accordion";
+            AccordionBlot.tagName = "div";
+            AccordionBlot.className = "accordion-block";
+            Quill.register(AccordionBlot);
             //------------------------------------------------
             currentQuill = new Quill("#inlineEditor", {
                 theme: "snow",
@@ -615,7 +769,9 @@
                             ["glitch"],
                             ["spoiler"],
                             ["youtube"],
+                            ["audio"],
                             ["divider"],
+                            ["accordion"],
                             ["clean"]
                         ],
                         handlers: {
@@ -656,11 +812,25 @@
                                 this.quill.insertEmbed(range.index, "youtube-embed", videoId);
                                 this.quill.insertText(range.index + 1, "\n");
                             },
+                            audio: function() {
+                                const input = document.createElement("input");
+                                input.type = "file";
+                                input.accept = "audio/*";
+                                input.click();
+                                input.onchange = async () => {
+                                    const file = input.files[0];
+                                    if (!file) return;
+                                    const url = await uploadAudioFile(file);
+                                    const range = this.quill.getSelection() || { index: 0 };
+                                    this.quill.insertEmbed(range.index, "audio-embed", url);
+                                    this.quill.insertText(range.index + 1, "\n");
+                                };
+                            },
                             divider: function() {
                                 const quill = this.quill;
                                 const range = quill.getSelection() || { index: 0 };
 
-                                // Показываем мини-меню выбора стиля
+                                //мини-меню выбора стиля
                                 const existing = document.getElementById("dividerMenu");
                                 if (existing) { existing.remove(); return; }
 
@@ -691,6 +861,18 @@
                                 setTimeout(() => {
                                     document.addEventListener("click", () => menu.remove(), { once: true });
                                 }, 0);
+                            },
+                            accordion: function() {
+                                const quill = this.quill;
+                                const range = quill.getSelection() || { index: 0 };
+
+                                const summary = prompt("Заголовок (текст на стрелке):");
+                                if (!summary) return;
+                                const content = prompt("Содержимое (текст который скрыт):");
+                                if (content === null) return;
+
+                                quill.insertEmbed(range.index, "accordion", { summary, content });
+                                quill.insertText(range.index + 1, "\n");
                             }
                         }
                     }
@@ -760,7 +942,10 @@
                 await updateDoc(doc(db, "pages", currentPageId), { content: newContent, updatedAt: new Date() });
                 page.content = newContent;
                 document.getElementById("pageBody").innerHTML = newContent;
-                setTimeout(() => initTooltips(db, "#pageBody"), 100);
+                setTimeout(() => {
+                    initTooltips(db, "#pageBody");
+                    initAudioPlayers(document.getElementById("pageBody"));
+                }, 100);
                 document.getElementById("pageBody").style.display = "block";
                 document.getElementById("editToolbar").style.display = "none";
                 document.getElementById("editInlineBtn").style.display = "inline-block";
