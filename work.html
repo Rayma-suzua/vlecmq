@@ -549,33 +549,46 @@
     function loadPage(page) {
         currentPageId = page.id;
         const content = document.getElementById("pageContent");
-        content.innerHTML = `
-        ${page.cover ? `<img src="${page.cover}" class="page-cover-img">` : ""}
-        <div class="page-header-row">
-            <h1 class="page-title">${page.title}</h1>
-            ${auth.currentUser?.email === ADMIN_EMAIL ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
-            <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
-        </div>
-        <div class="page-body" id="pageBody">${page.content}</div>
-        <div class="page-update-info">
-        <div class="page-update-line"></div>
-        <span>
-                Обновлено: ${
-                    page.updatedAt?.toDate
-                        ? page.updatedAt.toDate().toLocaleDateString("ru-RU")
-                        : "—"
-                }
-            </span>
-        </div>
-        ${auth.currentUser?.email === ADMIN_EMAIL ? `
-            <div class="edit-toolbar" id="editToolbar" style="display:none">
-                <div id="inlineEditor"></div>
-                <div class="edit-actions">
-                    <button class="auth-btn" id="saveInlineBtn">Сохранить</button>
-                    <button class="nav-btn logout-btn" id="cancelInlineBtn">Отмена</button>
-                </div>
-                <p class="auth-error" id="inlineError"></p>
+
+        const displayContent = (page.content || "").replace(
+            /:::(.*?)===([\s\S]*?):::/g,
+            (match, title, accContent) => `
+            <div class="accordion-block">
+                <details class="accordion-details">
+                    <summary class="accordion-summary">${title.trim()}</summary>
+                    <div class="accordion-content">${accContent.trim()}</div>
+                </details>
             </div>
+        `
+        );
+
+        content.innerHTML = `
+    ${page.cover ? `<img src="${page.cover}" class="page-cover-img">` : ""}
+    <div class="page-header-row">
+        <h1 class="page-title">${page.title}</h1>
+        ${auth.currentUser?.email === ADMIN_EMAIL ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
+        <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
+    </div>
+    <div class="page-body" id="pageBody">${displayContent}</div>
+    <div class="page-update-info">
+    <div class="page-update-line"></div>
+    <span>
+            Обновлено: ${
+            page.updatedAt?.toDate
+                ? page.updatedAt.toDate().toLocaleDateString("ru-RU")
+                : "—"
+        }
+        </span>
+    </div>
+    ${auth.currentUser?.email === ADMIN_EMAIL ? `
+        <div class="edit-toolbar" id="editToolbar" style="display:none">
+            <div id="inlineEditor"></div>
+            <div class="edit-actions">
+                <button class="auth-btn" id="saveInlineBtn">Сохранить</button>
+                <button class="nav-btn logout-btn" id="cancelInlineBtn">Отмена</button>
+            </div>
+            <p class="auth-error" id="inlineError"></p>
+        </div>
         ` : ""}
     `;
 
@@ -885,11 +898,28 @@
                     span.innerHTML = a.innerHTML;
                     a.parentNode.replaceChild(span, a);
                 });
+                tempDiv.querySelectorAll(".spoiler").forEach(span => {
+                    span.classList.add("hidden");
+                });
+
                 const newContent = tempDiv.innerHTML.replace(/\t/g, '&nbsp;&nbsp;&nbsp;');
+
                 await updateDoc(doc(db, "pages", currentPageId), { content: newContent, updatedAt: new Date() });
                 page.content = newContent;
-                document.getElementById("pageBody").innerHTML = newContent;
-                renderAccordions(document.getElementById("pageBody"));
+
+                const displayContent = newContent.replace(
+                    /:::(.*?)===([\s\S]*?):::/g,
+                    (match, title, content) => `
+        <div class="accordion-block">
+            <details class="accordion-details">
+                <summary class="accordion-summary">${title.trim()}</summary>
+                <div class="accordion-content">${content.trim()}</div>
+            </details>
+        </div>
+    `
+                );
+                document.getElementById("pageBody").innerHTML = displayContent;
+
                 setTimeout(() => {
                     initTooltips(db, "#pageBody");
                     initAudioPlayers(document.getElementById("pageBody"));
@@ -897,7 +927,6 @@
                 document.getElementById("pageBody").style.display = "block";
                 document.getElementById("editToolbar").style.display = "none";
                 document.getElementById("editInlineBtn").style.display = "inline-block";
-                currentQuill = null;
                 currentQuill = null;
                 errorEl.textContent = "";
             } catch (e) {
