@@ -714,34 +714,6 @@
             DividerBlot.blotName = "divider";
             DividerBlot.tagName = "hr";
             Quill.register(DividerBlot);
-
-            //выпадающий текст
-            class AccordionBlot extends BlockEmbed {
-                static create(value) {
-                    const node = super.create();
-                    node.setAttribute("contenteditable", "false");
-                    node.className = "accordion-block";
-                    const summary = value?.summary || "Нажми чтобы открыть";
-                    const content = value?.content || "";
-                    node.innerHTML = `
-                    <details class="accordion-details">
-                        <summary class="accordion-summary">${summary}</summary>
-                        <div class="accordion-content">${content}</div>
-                    </details>
-                    `;
-                    return node;
-                }
-                static value(node) {
-                    return {
-                        summary: node.querySelector(".accordion-summary")?.textContent || "",
-                        content: node.querySelector(".accordion-content")?.innerHTML || ""
-                    };
-                }
-            }
-            AccordionBlot.blotName = "accordion";
-            AccordionBlot.tagName = "div";
-            AccordionBlot.className = "accordion-block";
-            Quill.register(AccordionBlot);
             //------------------------------------------------
             currentQuill = new Quill("#inlineEditor", {
                 theme: "snow",
@@ -759,7 +731,6 @@
                             ["youtube"],
                             ["audio"],
                             ["divider"],
-                            ["accordion"],
                             ["clean"]
                         ],
                         handlers: {
@@ -849,24 +820,6 @@
                                 setTimeout(() => {
                                     document.addEventListener("click", () => menu.remove(), { once: true });
                                 }, 0);
-                            },
-                            accordion: function() {
-                                const quill = this.quill;
-                                const range = quill.getSelection() || { index: 0 };
-                                const selectedText = range.length > 0 ? quill.getText(range.index, range.length) : "";
-
-                                const summary = prompt("Заголовок аккордеона:");
-                                if (!summary) return;
-
-                                if (range.length > 0) {
-                                    quill.deleteText(range.index, range.length);
-                                }
-
-                                quill.insertEmbed(range.index, "accordion", {
-                                    summary,
-                                    content: selectedText || "Содержимое..."
-                                });
-                                quill.insertText(range.index + 1, "\n");
                             }
                         }
                     }
