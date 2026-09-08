@@ -1926,16 +1926,13 @@ img.img-right {
     min-height: 40px !important;
     max-height: 200px !important;
     overflow-y: auto !important;
-    padding: 6px 0 !important;
+    padding: 6px 8px !important;
     color: var(--text) !important;
 }
 
 .comment-quill-editor .ql-editor.ql-blank::before {
     color: var(--text-muted) !important;
 }
-
-
-
 /*--------------------------------------------*/
 
 /* ОТВЕТЫ */
@@ -2004,6 +2001,40 @@ img.img-right {
     margin-bottom: 12px;
     min-height: 80px;
 }
+
+
+.reply-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-input);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.reply-banner span {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.reply-banner button {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.reply-banner button:hover {
+    color: var(--error);
+}
+
+
 /*--------------------------------------------*/
 /* комментарии 2?*/
 .comment-form-box {

@@ -54,6 +54,10 @@
         <h2 class="comments-title">Комментарии</h2>
 
         <div id="commentForm" class="comment-form-box" style="display:none">
+            <div id="replyBanner" class="reply-banner" style="display:none">
+                Ответ для <span id="replyBannerName"></span>
+                <button type="button" id="cancelReplyBanner">✕</button>
+            </div>
             <div id="commentEditor" class="comment-quill-editor"></div>
             <div class="comment-form-actions">
                 <button class="comment-spoiler-btn" id="commentSpoilerBtn" title="Спойлер">👁</button>
@@ -95,6 +99,7 @@
     }
 
     let isAdmin = false;
+    let replyingTo = null;
     let currentQuill = null;
     let currentPageId = null;
     //загрузка картинок
@@ -1146,33 +1151,56 @@
         container.querySelectorAll(".comment-edit-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 const id = btn.dataset.id;
-                const oldText = btn.dataset.text;
+                const oldHtml = btn.dataset.text;
                 const commentEl = document.getElementById(`comment-${id}`);
                 const textEl = commentEl.querySelector(".comment-text");
                 if (commentEl.querySelector(".comment-edit-form")) return;
+
                 const form = document.createElement("div");
-                form.className = "comment-edit-form";
+                form.className = "comment-edit-form comment-form-box";
                 form.innerHTML = `
-                <textarea class="auth-input" style="min-height:60px;margin-top:8px">${oldText}</textarea>
-                <div style="display:flex;gap:8px;margin-top:8px">
-                    <button class="auth-btn save-edit-btn" style="padding:6px 14px;font-size:13px">Сохранить</button>
-                    <button class="nav-btn logout-btn cancel-edit-btn" style="padding:6px 14px;font-size:13px">Отмена</button>
-                </div>
-            `;
+            <div class="comment-quill-editor" id="editEditor-${id}"></div>
+            <div class="comment-form-actions">
+                <button class="comment-spoiler-btn edit-spoiler-btn" title="Спойлер">👁</button>
+                <div style="flex:1"></div>
+                <button class="comment-cancel-btn cancel-edit-btn">Отмена</button>
+                <button class="auth-btn save-edit-btn" style="padding:6px 18px;font-size:13px">Сохранить</button>
+            </div>
+        `;
                 textEl.after(form);
                 textEl.style.display = "none";
+
+                const editQuill = new Quill(`#editEditor-${id}`, {
+                    theme: "snow",
+                    modules: {
+                        toolbar: [
+                            ["bold", "italic", "underline", "strike"],
+                            [{ align: [] }],
+                            ["clean"]
+                        ]
+                    }
+                });
+                editQuill.root.innerHTML = oldHtml;
+
+                form.querySelector(".edit-spoiler-btn")?.addEventListener("click", () => {
+                    const range = editQuill.getSelection();
+                    if (!range || range.length === 0) return;
+                    editQuill.format("spoiler", true);
+                });
+
                 form.querySelector(".cancel-edit-btn").addEventListener("click", () => {
                     form.remove();
                     textEl.style.display = "block";
                 });
+
                 form.querySelector(".save-edit-btn").addEventListener("click", async () => {
-                    const newText = form.querySelector("textarea").value.trim();
-                    if (!newText) return;
-                    await updateDoc(doc(db, "comments", id), { text: newText });
-                    textEl.textContent = newText;
+                    const newHtml = editQuill.root.innerHTML.trim();
+                    if (!newHtml || newHtml === "<p><br></p>") return;
+                    await updateDoc(doc(db, "comments", id), { text: newHtml });
+                    textEl.innerHTML = renderCommentText(newHtml);
                     textEl.style.display = "block";
                     form.remove();
-                    btn.dataset.text = newText;
+                    btn.dataset.text = newHtml;
                 });
             });
         });
@@ -1181,72 +1209,14 @@
             btn.addEventListener("click", () => {
                 const parentId = btn.dataset.id;
                 const parentName = btn.dataset.name;
-                const commentEl = document.getElementById(`comment-${parentId}`);
-                if (commentEl.querySelector(".reply-form")) return;
-                const form = document.createElement("div");
-                form.className = "comment-form-box";
-                form.style.marginTop = "8px";
-                form.innerHTML = `
-                    <textarea class="comment-textarea reply-textarea" placeholder="Ответ для ${parentName}..." style="min-height:40px"></textarea>
-                    <div class="comment-form-actions">
-                        <button class="comment-spoiler-btn reply-spoiler-btn" title="Спойлер">👁</button>
-                        <div style="flex:1"></div>
-                        <button class="comment-cancel-btn cancel-reply-btn">Отмена</button>
-                        <button class="auth-btn send-reply-btn" style="padding:6px 18px;font-size:13px">Ответить</button>
-                    </div>
-                `;
-                commentEl.after(form);
-                const replyTextarea = form.querySelector(".reply-textarea");
-                replyTextarea.addEventListener("input", () => {
-                    replyTextarea.style.height = "auto";
-                    replyTextarea.style.height = replyTextarea.scrollHeight + "px";
-                });
-                //спойлер
-                form.querySelector(".reply-spoiler-btn")?.addEventListener("click", () => {
-                    const start = replyTextarea.selectionStart;
-                    const end = replyTextarea.selectionEnd;
-                    const selected = replyTextarea.value.substring(start, end);
-                    if (!selected) return;
-                    replyTextarea.value = replyTextarea.value.substring(0, start) + `[spoiler]${selected}[/spoiler]` + replyTextarea.value.substring(end);
-                });
-                form.querySelector(".cancel-reply-btn").addEventListener("click", () => form.remove());
-                form.querySelector(".send-reply-btn").addEventListener("click", async () => {
-                    const text = form.querySelector("textarea").value.trim();
-                    if (!text) return;
-                    const user = auth.currentUser;
-                    if (!user) return;
-                    const userDoc = await getDoc(doc(db, "users", user.uid));
-                    const userData = userDoc.exists() ? userDoc.data() : {};
-                    const userName = userData.name || userData.email?.split("@")[0] || "Аноним";
-                    const avatar = userData.avatar || "";
 
-                    // текст родительского комментария для цитаты
-                    const parentEl = document.getElementById(`comment-${parentId}`);
-                    const replyToText = parentEl?.querySelector(".comment-text")?.textContent?.slice(0, 100) || "";
-                    const replyToName = parentName;
+                replyingTo = { id: parentId, name: parentName };
 
-                    await addDoc(collection(db, "comments"), {
-                        text, userId: user.uid, userName, avatar,
-                        workId, parentId,
-                        replyToText, replyToName,
-                        createdAt: new Date()
-                    });
-                    //уведа
-                    const parentComment = allComments.find(c => c.id === parentId);
-                    if (parentComment && parentComment.userId !== user.uid) {
-                        await addDoc(collection(db, "notifications"), {
-                            userId: parentComment.userId,
-                            type: "reply",
-                            text: `${userName} ответил на ваш комментарий: "${text.slice(0, 50)}..."`,
-                            link: window.location.href,
-                            read: false,
-                            createdAt: new Date()
-                        });
-                    }
+                document.getElementById("replyBannerName").textContent = parentName;
+                document.getElementById("replyBanner").style.display = "flex";
 
-                    form.remove();
-                    await loadComments(currentUser);
-                });
+                document.getElementById("commentForm").scrollIntoView({ behavior: "smooth", block: "center" });
+                window.commentQuill.focus();
             });
         });
     }
@@ -1320,7 +1290,10 @@
             document.getElementById("cancelCommentBtn")?.addEventListener("click", () => {
                 window.commentQuill.root.innerHTML = "";
             });
-
+            document.getElementById("cancelReplyBanner")?.addEventListener("click", () => {
+                replyingTo = null;
+                document.getElementById("replyBanner").style.display = "none";
+            });
             //кнопка спойлера
             document.getElementById("commentSpoilerBtn")?.addEventListener("click", () => {
                 const range = window.commentQuill.getSelection();
@@ -1348,14 +1321,43 @@
         const userName = userData.name || userData.email?.split("@")[0] || "Аноним";
         const avatar = userData.avatar || "";
 
-        await addDoc(collection(db, "comments"), {
+        const commentData = {
             text, userId: user.uid, userName, avatar, workId,
             link: window.location.href,
             createdAt: new Date()
-        });
+        };
 
+        if (replyingTo) {
+            const parentEl = document.getElementById(`comment-${replyingTo.id}`);
+            const replyToText = parentEl?.querySelector(".comment-text")?.textContent?.slice(0, 100) || "";
+            commentData.parentId = replyingTo.id;
+            commentData.replyToText = replyToText;
+            commentData.replyToName = replyingTo.name;
+        }
+
+        await addDoc(collection(db, "comments"), commentData);
+
+        //уведомление автору при ответе
+        if (replyingTo) {
+            const parentDoc = await getDoc(doc(db, "comments", replyingTo.id));
+            if (parentDoc.exists()) {
+                const parentData = parentDoc.data();
+                if (parentData.userId !== user.uid) {
+                    await addDoc(collection(db, "notifications"), {
+                        userId: parentData.userId,
+                        type: "reply",
+                        text: `${userName} ответил на ваш комментарий: "${text.replace(/<[^>]+>/g, "").slice(0, 50)}..."`,
+                        link: window.location.href,
+                        read: false,
+                        createdAt: new Date()
+                    });
+                }
+            }
+        }
+
+        replyingTo = null;
+        document.getElementById("replyBanner").style.display = "none";
         window.commentQuill.root.innerHTML = "";
-        loadComments(user);
     });
 
     //букмарк(закладка)
