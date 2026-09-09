@@ -8,6 +8,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'ru',
+        includedLanguages: 'en,de,fr,ja,ko,zh-CN,uk,pl',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body>
 <div class="auth-container">
@@ -54,7 +64,7 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // переключение вкладок
+  //---ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК---
   document.getElementById("loginTab").addEventListener("click", () => {
     document.getElementById("loginForm").style.display = "block";
     document.getElementById("registerForm").style.display = "none";
@@ -69,7 +79,7 @@
     document.getElementById("loginTab").classList.remove("active");
   });
 
-  // регистрация
+  //---РЕГИСТРАЦИЯ---
   document.getElementById("registerBtn").addEventListener("click", async () => {
     const name = document.getElementById("regName").value.trim();
     const email = document.getElementById("regEmail").value.trim();
@@ -101,7 +111,7 @@
     }
   });
 
-  // вход
+  //---ВХОД---
   document.getElementById("loginBtn").addEventListener("click", async () => {
     const email = document.getElementById("loginEmail").value.trim();
     const password = document.getElementById("loginPassword").value;

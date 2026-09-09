@@ -8,6 +8,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'ru',
+                includedLanguages: 'en,de,fr,ja,ko,zh-CN,uk,pl',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body>
 
@@ -15,6 +25,7 @@
     <div class="header-inner">
         <a href="index.html" class="logo">VL-EC-MQ</a>
         <nav class="nav">
+            <div id="google_translate_element"></div>
             <a href="glossary.html" class="nav-link">Глоссарий</a>
             <div id="authButtons"></div>
         </nav>
@@ -60,7 +71,7 @@
     const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
     let isAdmin = false
 
-    // загрузка вселенных
+    //загрузка вселенных
     const container = document.getElementById("universesContainer");
     const snapshot = await getDocs(query(collection(db, "universes"), orderBy("order")));
 
@@ -185,6 +196,14 @@
         if (user) {
             isAdmin = user.email === ADMIN_EMAIL;
             loadNotifications(user.uid);
+            //проверка бана
+            onSnapshot(doc(db, "users", user.uid), async (snap) => {
+                if (snap.exists() && snap.data().blocked) {
+                    await signOut(auth);
+                    window.location.href = "login.html";
+                }
+            });
+
             authButtons.innerHTML = `
             ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
             <button class="notif-bell" id="notifBell">🔔 <span class="notif-count" id="notifCount" style="display:none">0</span></button>

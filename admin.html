@@ -6,6 +6,16 @@
   <title>Админ панель</title>
   <link rel="stylesheet" href="css/style.css">
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'ru',
+        includedLanguages: 'en,de,fr,ja,ko,zh-CN,uk,pl',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body>
 
@@ -13,6 +23,7 @@
   <div class="header-inner">
     <a href="index.html" class="logo">VL-EC-MQ</a>
     <nav class="nav">
+      <div id="google_translate_element"></div>
       <span class="nav-username" id="adminEmail"></span>
       <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
     </nav>
@@ -159,8 +170,8 @@
     <div id="sectionNewCharacter" style="display:none">
       <h2 class="admin-section-title">Новый персонаж</h2>
       <input type="text" id="charName" class="auth-input" placeholder="Имя персонажа">
-      <input type="text" id="charCode" class="auth-input" placeholder="Код (необязательно, напр. VL-01)">
-      <input type="text" id="charRole" class="auth-input" placeholder="Роль / группа (напр. Верховный Дракон)">
+      <input type="text" id="charCode" class="auth-input" placeholder="Код (необязательно">
+      <input type="text" id="charRole" class="auth-input" placeholder="Роль / группа">
       <input type="text" id="charTags" class="auth-input" placeholder="Теги через запятую">
       <textarea id="charDesc" class="auth-input admin-textarea" placeholder="Короткое описание"></textarea>
 
@@ -228,6 +239,7 @@
   const db = getFirestore(app);
   const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
 
+  //-цветные коды-
   function colorizeCode(code) {
     if (!code) return "";
     const errWords = ["ERR", "DEL", "DEAD"];
@@ -315,7 +327,7 @@
       quill.insertEmbed(range.index, "image", url);
     };
   });
-
+  //-загрузка картинок-
   async function uploadFile(file) {
     const formData = new FormData();
     formData.append("file", file);
@@ -655,7 +667,8 @@
       if (btnId === "btnSecrets") loadSecretsList();
     });
   });
-
+  //---ОБЛОЖКИ---
+  //-произведения-
   document.getElementById("workCover").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -664,7 +677,7 @@
       preview.style.display = "block";
     }
   });
-
+  //-страницы-
   document.getElementById("pageCover").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -673,7 +686,7 @@
       preview.style.display = "block";
     }
   });
-
+  //-вселенной-
   document.getElementById("universeCover").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -682,7 +695,7 @@
       preview.style.display = "block";
     }
   });
-
+  //-персонажа-
   document.getElementById("charPortrait").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -691,7 +704,7 @@
       preview.style.display = "block";
     }
   });
-
+  //-секретной страницы-
   document.getElementById("secretCover").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -706,7 +719,9 @@
       label.querySelector("input[type=file]").click();
     });
   });
-
+  //-------------------------
+  //---СОХРАНЕНИЕ---
+  //-произведения-
   document.getElementById("saveWorkBtn").addEventListener("click", async () => {
     const title = document.getElementById("workTitle").value.trim();
     const desc = document.getElementById("workDesc").value.trim();
@@ -739,7 +754,7 @@
       errorEl.textContent = e.message;
     }
   });
-
+  //-вселенную-
   document.getElementById("saveUniverseBtn").addEventListener("click", async () => {
     const title = document.getElementById("universeTitle").value.trim();
     const desc = document.getElementById("universeDesc").value.trim();
@@ -770,7 +785,7 @@
       errorEl.textContent = e.message;
     }
   });
-
+  //-страницу-
   document.getElementById("savePageBtn").addEventListener("click", async () => {
     const title = document.getElementById("pageTitle").value.trim();
     const workId = document.getElementById("pageWork").value;
@@ -783,7 +798,7 @@
     const editId = saveBtn.dataset.editId;
 
     if (!title) { errorEl.textContent = "Введи заголовок"; return; }
-    if (!workId && !characterId && !secretId) { errorEl.textContent = "Выбери произведение, персонажа или секретную страницу"; return; }
+    if (!workId && !characterId && !secretId) { errorEl.textContent = "Произведение / Персонаж / Секретная страница"; return; }
 
     try {
       errorEl.style.color = "var(--text-muted)";
@@ -812,7 +827,8 @@
         errorEl.style.color = "#4caf50";
         errorEl.textContent = "Страница сохранена!";
 
-// Уведомления пользователям
+        //---УВЕДЫ---
+        //-в произведениях-
         if (workId) {
           const bookmarksSnap = await getDocs(query(collection(db, "bookmarks"), where("workId", "==", workId)));
           const workSnap = await getDoc(doc(db, "works", workId));
@@ -830,7 +846,7 @@
           });
           await Promise.all(notifPromises);
         }
-
+        //-в персонажах-
         if (characterId) {
           const bookmarksSnap = await getDocs(query(collection(db, "bookmarks"), where("characterId", "==", characterId)));
           const charSnap = await getDoc(doc(db, "characters", characterId));
@@ -858,6 +874,7 @@
     }
   });
 
+  //---СОХРАНЕНИЕ ПЕРСОНАЖА---
   document.getElementById("saveCharacterBtn").addEventListener("click", async () => {
     const charName = document.getElementById("charName").value.trim();
     const charCode = document.getElementById("charCode").value.trim();
@@ -898,6 +915,7 @@
     }
   });
 
+  //---ТЕРМИНЫ---
   function resetTermForm() {
     document.getElementById("termEditId").value = "";
     document.getElementById("termWord").value = "";
@@ -938,7 +956,7 @@
       errorEl.textContent = e.message;
     }
   });
-
+  //---СЕКРЕТНЫЕ СТРАНИЦЫ---
   async function loadSecretsList() {
     const list = document.getElementById("secretsList");
     list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
@@ -997,7 +1015,7 @@
         document.getElementById(`secret-${id}`).remove();
       });
     });
-
+  //-сохранить секретную страницу-
   document.getElementById("saveSecretBtn").addEventListener("click", async () => {
     const title = document.getElementById("secretTitle").value.trim();
     const code = document.getElementById("secretCode").value.trim();

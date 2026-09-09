@@ -38,7 +38,7 @@ h1, h2, h3, h4,
 }
 /*--------------------------------------------*/
 
-/* СТИЛИ ТЕКСТА ОПИСАНИЯ */
+/*___СТИЛИ ТЕКСТА ОПИСАНИЯ___*/
 .work-content {
     flex: 1;
     min-width: 0;
@@ -82,7 +82,7 @@ h1, h2, h3, h4,
     border-bottom-style: solid;
 }
 
-/* Мобильная адаптация */
+/*мобильная адаптация*/
 @media (max-width: 600px) {
     main, .content, .container {
         padding-left: 12px;
@@ -91,7 +91,7 @@ h1, h2, h3, h4,
 }
 /*--------------------------------------------*/
 
-/* АУТЕНТИФИКАЦИЯ */
+/*___АУТЕНТИФИКАЦИЯ___*/
 .auth-container {
     display: flex;
     justify-content: center;
@@ -185,7 +185,7 @@ h1, h2, h3, h4,
 }
 /*--------------------------------------------*/
 
-/* HEADER */
+/*___ШАПКА___*/
 .header {
     position: sticky;
     top: 0;
@@ -205,6 +205,65 @@ h1, h2, h3, h4,
     justify-content: space-between;
 }
 
+/*контейнер шапки*/
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+/*гугл перевод*/
+#google_translate_element {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    margin: 0 12px 0 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    z-index: 10 !important;
+}
+
+.goog-te-gadget-simple {
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-family: inherit !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.goog-te-gadget-icon {
+    display: none !important;
+}
+
+.goog-te-gadget-simple::before {
+    content: "🌐" !important;
+    margin-right: 6px !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+}
+
+.goog-te-gadget-simple *,
+.goog-te-menu-value,
+.goog-te-menu-value span {
+    color: #6a778f !important;
+    border: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+    font-family: inherit !important;
+    transition: color 0.2s ease !important;
+}
+
+.goog-te-gadget-simple:hover * {
+    color: #ffffff !important;
+}
+/*лого*/
 .logo {
     font-size: 22px;
     font-weight: 800;
@@ -212,7 +271,7 @@ h1, h2, h3, h4,
     text-decoration: none;
     letter-spacing: 2px;
 }
-
+/*навигация*/
 .nav {
     display: flex;
     align-items: center;
@@ -246,7 +305,7 @@ h1, h2, h3, h4,
 .nav-btn:hover {
     background: var(--accent-hover);
 }
-
+/*кнопка админа*/
 .admin-btn {
     background: #7c3aed;
 }
@@ -272,7 +331,7 @@ h1, h2, h3, h4,
 }
 /*--------------------------------------------*/
 
-/* HERO */
+/*___ГЛАВНЫЙ ЭКРАН___-*/
 .hero {
     min-height: 340px;
     display: flex;
@@ -298,7 +357,7 @@ h1, h2, h3, h4,
 }
 /*--------------------------------------------*/
 
-/* ПРОИЗВЕДЕНИЯ */
+/*___ПРОИЗВЕДЕНИЯ___*/
 .works-section {
     max-width: 1200px;
     margin: 0 auto;
@@ -382,7 +441,7 @@ h1, h2, h3, h4,
 }
 /*--------------------------------------------*/
 
-/* АДМИН */
+/*___АДМИН___*/
 .admin-layout {
     display: flex;
     min-height: calc(100vh - 64px);
@@ -538,7 +597,7 @@ h1, h2, h3, h4,
 }
 /*--------------------------------------------*/
 
-/* QUILL OVERRIDES */
+/*___КАСТОМНЫЙ QUILL/ТУЛЛБАР___*/
 .ql-toolbar {
     background: var(--bg-card) !important;
     border-color: var(--border) !important;
@@ -587,7 +646,7 @@ h1, h2, h3, h4,
 }
 /*--------------------------------------------*/
 
-/* СТРАНИЦА ПРОИЗВЕДЕНИЯ */
+/*___СТРАНИЦА ПРОИЗВЕДЕНИЯ___*/
 .work-hero {
     position: relative;
     height: 360px;
@@ -762,7 +821,7 @@ h1, h2, h3, h4,
 }
 /*--------------------------------------------*/
 
-/* IMAGE SETTINGS POPUP */
+/*___ВСТАВКА ИЗОБРАЖЕНИЙ/POPUP___(хехе пуп)*/
 .img-popup {
     position: fixed;
     background: var(--bg-card);
@@ -824,7 +883,7 @@ h1, h2, h3, h4,
 }
 /*--------------------------------------------*/
 
-/* Стили картинок в тексте */
+/*___СТИЛИ КАРТИНОК В ТЕКСТЕ___*/
 .page-body img, .ql-editor img {
     max-width: 100%;
     border-radius: 6px;
@@ -858,7 +917,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* ГЛОССАРИЙ */
+/*___ГЛОССАРИЙ___*/
 .glossary-layout {
     max-width: 800px;
     margin: 0 auto;
@@ -928,7 +987,7 @@ img.img-right {
 
 /*--------------------------------------------*/
 
-/* TOOLTIPS */
+/*___ТЕРМИНЫ/TOOLTIPS___*/
 .term-link {
     color: var(--accent);
     border-bottom: 1px dashed var(--accent);
@@ -969,7 +1028,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* ФУТЕР */
+/*___ФУТЕР___*/
 .footer {
     border-top: 1px solid var(--border);
     padding: 24px;
@@ -986,7 +1045,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* DRAG AND DROP */
+/*___ПЕРЕТАСКИВАНИЕ/DRAG AND DROP___*/
 .drag-handle {
     color: var(--text-muted);
     font-size: 20px;
@@ -1001,7 +1060,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* ABOUT */
+/*___ABOUT___*/
 .about-section {
     padding: 80px 40px;
     background: radial-gradient(ellipse at center, rgba(79,110,247,0.08) 0%, transparent 70%);
@@ -1042,7 +1101,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* ВСЕЛЕННЫЕ */
+/*___ВСЕЛЕННЫЕ___*/
 .universe-section {
     height: 100vh;
     background-size: cover;
@@ -1130,7 +1189,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* ПЕРСОНАЖИ */
+/*___ПЕРСОНАЖИ___*/
 .chars-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -1212,7 +1271,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* ЦВЕТА КОДОВ */
+/*___ЦВЕТА КОДОВ___*/
 .code-err { color: #ff4f4f; }
 .code-del { color: #ff4f4f; }
 .code-act { color: #4caf50; }
@@ -1222,7 +1281,7 @@ img.img-right {
 .code-custom { }
 /*--------------------------------------------*/
 
-/* ОКНО СЕКРЕТНОЙ СТРАНИЦЫ */
+/*___ОКНО СЕКРЕТНОЙ СТРАНИЦЫ___*/
 .secret-modal {
     position: fixed;
     inset: 0;
@@ -1282,7 +1341,7 @@ img.img-right {
     min-height: 18px;
 }
 
-/* SECRET LANDING */
+/*___SECRET LANDING___*/
 .secret-landing {
     display: flex;
     flex-direction: column;
@@ -1318,8 +1377,8 @@ img.img-right {
 .page-body .ql-indent-3 { padding-left: 9em; }
 /*--------------------------------------------*/
 
-/* СЕКЦИИ САЙДБАРА */
-/*  кнопка-стрелка */
+/*___СЕКЦИИ САЙДБАРА___*/
+/*кнопка-стрелка*/
 .sidebar-toggle-btn {
     position: fixed;
     top: 50%;
@@ -1348,7 +1407,7 @@ img.img-right {
     transition: transform 0.3s ease;
 }
 
-/* --- ВЫДВИЖНОЙ САЙДБАР (ПК-ВЕРСИЯ) --- */
+/*___ВЫДВИЖНОЙ САЙДБАР (ПК-ВЕРСИЯ)___*/
 .work-sidebar {
     position: fixed;
     top: 64px;
@@ -1379,7 +1438,7 @@ img.img-right {
     transform: rotate(180deg);
 }
 
-/* --- ОФОРМЛЕНИЕ ЭЛЕМЕНТОВ МЕНЮ --- */
+/*___ОФОРМЛЕНИЕ ЭЛЕМЕНТОВ МЕНЮ___*/
 .sidebar-title {
     font-size: 11px;
     font-weight: 700;
@@ -1449,7 +1508,7 @@ img.img-right {
     font-weight: 600;
 }
 
-/* МОБИЛЬНАЯ АДАПТАЦИЯ */
+/*___МОБИЛЬНАЯ АДАПТАЦИЯ___*/
 @media (max-width: 768px) {
     .work-sidebar {
         top: 0;
@@ -1467,7 +1526,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* UNIVERSE TABS */
+/*___UNIVERSE TABS___*/
 .universe-tabs {
     display: flex;
     justify-content: center;
@@ -1511,7 +1570,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* ЗАКОНЫ */
+/*___ЗАКОНЫ___*/
 .laws-container {
     display: flex;
     flex-direction: column;
@@ -1689,7 +1748,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* GLITCH TEXT */
+/*___ГЛИТЧ___*/
 .glitch {
     position: relative;
     display: inline-block;
@@ -1749,7 +1808,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* СПОЙЛЕР */
+/*___СПОЙЛЕР___*/
 .spoiler {
     background: var(--bg-input);
     border-radius: 4px;
@@ -1784,7 +1843,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* КОММЫ */
+/*___КОММЫ___*/
 .comments-section {
     border-top: 2px solid var(--border);
     padding: 48px 40px;
@@ -1935,7 +1994,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* ОТВЕТЫ */
+/*___ОТВЕТЫ___*/
 .replies-container {
     margin-top: 8px;
     padding-left: 16px;
@@ -2109,7 +2168,7 @@ img.img-right {
 
 
 /*--------------------------------------------*/
-/* ПРОФИЛЬ */
+/*___ПРОФИЛЬ___*/
 .profile-layout {
     display: flex;
     max-width: 1000px;
@@ -2193,7 +2252,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* БУКМАРК */
+/*___БУКМАРК___*/
 .bookmark-btn {
     background: none;
     border: none;
@@ -2216,7 +2275,7 @@ img.img-right {
 }
 /*--------------------------------------------*/
 
-/* УВЕДЫ */
+/*___УВЕДЫ___*/
 .notif-bell {
     background: none;
     border: none;
@@ -2298,7 +2357,7 @@ img.img-right {
 .notif-clear:hover { background: var(--bg-input); }
 /*--------------------------------------------*/
 
-/* УНИЧТОЖЕНИЕ ЕБЛИВОЙ ЧЁРТОЧКИ */
+/*___УНИЧТОЖЕНИЕ ЕБЛИВОЙ ЧЁРТОЧКИ___*/
 a.comment-name, a.comment-avatar {
     text-decoration: none;
 }
@@ -2326,7 +2385,7 @@ a.comment-name:hover {
 }
 /*--------------------------------------------*/
 
-/* СКРОЛЛБАР */
+/*___СКРОЛЛБАР___*/
 html {
     scrollbar-color: #4a5568 #1a202c;
     scrollbar-width: thin;
@@ -2351,7 +2410,7 @@ html {
     background: #718096;
 }
 /*--------------------------------------------*/
-/* ТУЛЛБАР (ЮТУБ) */
+/*___ТУЛЛБАР (ЮТУБ)___*/
 .ql-youtube::after {
     content: "YT";
     font-size: 11px;
@@ -2359,7 +2418,7 @@ html {
     color: #ff0000;
 }
 /*--------------------------------------------*/
-/* ВИДЕО (ЮТУБ) */
+/*___ВИДЕО (ЮТУБ)___*/
 .youtube-embed {
     margin: 16px 0;
 }
@@ -2374,7 +2433,7 @@ html {
     pointer-events: all;
 }
 /*--------------------------------------------*/
-/*ТУЛБАР (ПОЛОСКА)*/
+/*___ТУЛБАР (ПОЛОСКА)___*/
 .ql-divider::after {
     content: "—";
     font-size: 14px;
@@ -2411,7 +2470,7 @@ html {
     border-top: 3px double var(--border);
 }
 
-/* DIVIDER MENU */
+/*___DIVIDER MENU___*/
 .divider-menu {
     position: fixed;
     background: var(--bg-card);
@@ -2452,14 +2511,14 @@ html {
     top: 64px;
     z-index: 10;
 }
-/*--ВЫПАДАЮЩЕЕ МЕНЮ--*/
+/*___ВЫПАДАЮЩЕЕ МЕНЮ___*/
 .ql-accordion::after {
     content: "▶";
     font-size: 12px;
     color: var(--text-muted);
 }
 
-/*АККОРДЕОН(ВЫПАДАЮЩИЙ ТЕКСТ)*/
+/*___АККОРДЕОН(ВЫПАДАЮЩИЙ ТЕКСТ)___*/
 .accordion-block {
     margin: 12px 0;
 }
@@ -2613,7 +2672,7 @@ html {
 }
 
 /*--------------------------------------------*/
-/*ПОИСК В ЮНИВЕРС*/
+/*___ПОИСК В ЮНИВЕРС___*/
 .universe-search-wrap {
     max-width: 1200px;
     margin: 0 auto;
@@ -2673,7 +2732,7 @@ html {
 }
 /*--------------------------------------------*/
 
-/*ДРОПДАУН ТЭГОВ ПЕРСОВ*/
+/*___ДРОПДАУН ТЭГОВ ПЕРСОВ___*/
 .chars-layout {
     display: flex;
     gap: 0;
@@ -2805,7 +2864,7 @@ html {
 }
 
 /*--------------------------------------------*/
-/*СТРЕЛКА НАЗАД*/
+/*___СТРЕЛКА НАЗАД___*/
 .back-link {
     display: inline-block;
     margin-bottom: 20px;
