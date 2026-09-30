@@ -142,6 +142,7 @@
         const actWords = ["ACT"];
         const idleWords = ["IDLE", "INACT"];
         const deadWords = ["DEAD"];
+        const dmgWords = ["DMG"];
 
         return code.split(".").map(segment => {
             const upper = segment.toUpperCase();
@@ -149,6 +150,7 @@
             if (actWords.includes(upper)) return `<span class="code-act">${segment}</span>`;
             if (idleWords.includes(upper)) return `<span class="code-idle">${segment}</span>`;
             if (deadWords.includes(upper)) return `<span class="code-dead">${segment}</span>`;
+            if (dmgWords.includes(upper)) return `<span class="code-dmg">${segment}</span>`;
             return segment;
         }).join(".");
     }
