@@ -1276,7 +1276,7 @@ img.img-right {
 .code-del { color: #ff4f4f; }
 .code-act { color: #4caf50; }
 .code-inact { color: #888; }
-.code-dead { color: #ff4f4f; }
+.code-dead { color: #000000 !important; }
 .code-idle { color: #888; }
 .code-custom { }
 /*--------------------------------------------*/

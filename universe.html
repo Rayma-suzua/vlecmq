@@ -189,7 +189,6 @@
     const allTags = new Set();
     chars.forEach(c => (c.tags || []).forEach(t => allTags.add(t)));
 
-    // делим теги на "обычные" и "произведения" — только те, что реально есть у персонажей этой вселенной
     const regularTags = [...allTags].filter(t => !workNamesSet.has(t.toLowerCase())).sort((a, b) => a.localeCompare(b, "ru"));
     const workTags = [...allTags].filter(t => workNamesSet.has(t.toLowerCase())).sort((a, b) => a.localeCompare(b, "ru"));
 
