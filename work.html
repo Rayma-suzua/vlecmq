@@ -21,7 +21,7 @@
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body>
-
+<!-- НАВИГАЦИЯ -->
 <header class="header">
     <div class="header-inner">
         <a href="index.html" class="logo">VL-EC-MQ</a>
@@ -38,9 +38,12 @@
     <div class="work-hero-content">
         <a href="javascript:history.back()" class="back-link">← Назад</a>
         <h1 class="work-hero-title" id="workTitle">Загрузка...</h1>
+        <p class="char-code" id="charCode"></p>
         <p class="work-hero-desc" id="workDesc"></p>
+        <button class="view-portrait-btn" id="viewPortraitBtn" style="display:none">🖼 Посмотреть</button>
     </div>
 </div>
+
 
 <!-- БОКОВОЕ МЕНЮ -->
 <div class="work-layout">
@@ -154,6 +157,7 @@
     if (work.cover) {
         document.getElementById("workHero").style.backgroundImage = `url('${work.cover}')`;
     }
+
 
     const pagesQuery = query(collection(db, "pages"), where("workId", "==", workId));
     const pagesSnap = await getDocs(pagesQuery);
@@ -278,7 +282,6 @@
             });
         });
     }
-
 
     //ГЛОССАРИЙ
     async function initTooltips(db, contentSelector) {

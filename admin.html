@@ -76,7 +76,6 @@
       <p class="auth-error" id="universeError"></p>
     </div>
 
-
     <!-- СПИСОК ПРОИЗВЕДЕНИЙ -->
     <div id="sectionWorks">
       <h2 class="admin-section-title">Произведения</h2>
@@ -115,6 +114,22 @@
       <select id="pageCharacter" class="auth-input admin-select">
         <option value="">— Персонаж —</option>
       </select>
+      <div class="page-options" id="pageOptions" style="display:none">
+        <label class="page-option-label">
+          <input type="checkbox" id="showPortrait">
+          Показать портрет персонажа справа в тексте
+        </label>
+        <label class="page-option-label">
+          <input type="checkbox" id="showGallery">
+          Добавить галерею изображений
+        </label>
+        <div id="galleryUploadArea" style="display:none">
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Изображения галереи:</p>
+          <input type="file" id="galleryInput" accept="image/*" multiple style="display:none">
+          <button class="upload-btn" id="galleryUploadBtn">Выбрать изображения</button>
+          <div id="galleryPreview" class="gallery-preview-grid"></div>
+        </div>
+      </div>
       <select id="pageSecret" class="auth-input admin-select">
         <option value="">— Секретная страница —</option>
       </select>
@@ -796,6 +811,8 @@
     const errorEl = document.getElementById("pageError");
     const saveBtn = document.getElementById("savePageBtn");
     const editId = saveBtn.dataset.editId;
+    const showPortrait = document.getElementById("showPortrait")?.checked || false;
+    const showGallery = document.getElementById("showGallery")?.checked || false;
 
     if (!title) { errorEl.textContent = "Введи заголовок"; return; }
     if (!workId && !characterId && !secretId) { errorEl.textContent = "Произведение / Персонаж / Секретная страница"; return; }
@@ -810,6 +827,17 @@
       if (workId) pageData.workId = workId;
       if (characterId) pageData.characterId = characterId;
       if (secretId) pageData.secretId = secretId;
+      if (showPortrait) pageData.showPortrait = true;
+      if (showGallery) pageData.showGallery = true;
+
+      if (showGallery && galleryFiles.length > 0) {
+        const galleryUrls = [];
+        for (const file of galleryFiles) {
+          const url = await uploadFile(file);
+          galleryUrls.push(url);
+        }
+        pageData.gallery = galleryUrls;
+      }
 
       if (editId) {
         const updateData = { title, content };
@@ -817,6 +845,8 @@
         if (characterId) updateData.characterId = characterId;
         if (secretId) updateData.secretId = secretId;
         if (coverUrl) updateData.cover = coverUrl;
+        if (showPortrait) updateData.showPortrait = true;
+        if (showGallery) updateData.showGallery = true;
         await updateDoc(doc(db, "pages", editId), updateData);
         errorEl.style.color = "#4caf50";
         errorEl.textContent = "Страница обновлена!";
@@ -826,9 +856,8 @@
         const newPage = await addDoc(collection(db, "pages"), { ...pageData, createdAt: serverTimestamp() });
         errorEl.style.color = "#4caf50";
         errorEl.textContent = "Страница сохранена!";
-
-        //---УВЕДЫ---
-        //-в произведениях-
+        //УВЕДЫ
+        //-в произведениях
         if (workId) {
           const bookmarksSnap = await getDocs(query(collection(db, "bookmarks"), where("workId", "==", workId)));
           const workSnap = await getDoc(doc(db, "works", workId));
@@ -846,7 +875,7 @@
           });
           await Promise.all(notifPromises);
         }
-        //-в персонажах-
+        //-в персонажах
         if (characterId) {
           const bookmarksSnap = await getDocs(query(collection(db, "bookmarks"), where("characterId", "==", characterId)));
           const charSnap = await getDoc(doc(db, "characters", characterId));
@@ -1059,6 +1088,32 @@
       errorEl.style.color = "var(--error)";
       errorEl.textContent = e.message;
     }
+  });
+
+  document.getElementById("pageCharacter").addEventListener("change", (e) => {
+    const pageOptions = document.getElementById("pageOptions");
+    pageOptions.style.display = e.target.value ? "flex" : "none";
+  });
+
+  document.getElementById("showGallery").addEventListener("change", (e) => {
+    document.getElementById("galleryUploadArea").style.display = e.target.checked ? "block" : "none";
+  });
+
+  document.getElementById("galleryUploadBtn").addEventListener("click", () => {
+    document.getElementById("galleryInput").click();
+  });
+
+  const galleryFiles = [];
+
+  document.getElementById("galleryInput").addEventListener("change", (e) => {
+    const preview = document.getElementById("galleryPreview");
+    Array.from(e.target.files).forEach(file => {
+      galleryFiles.push(file);
+      const img = document.createElement("img");
+      img.className = "gallery-preview-thumb";
+      img.src = URL.createObjectURL(file);
+      preview.appendChild(img);
+    });
   });
 
   loadWorksList();

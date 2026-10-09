@@ -40,6 +40,7 @@
         <h1 class="work-hero-title" id="charName">Загрузка...</h1>
         <p class="char-code" id="charCode"></p>
         <p class="work-hero-desc" id="charRole"></p>
+        <button class="view-portrait-btn" id="viewPortraitBtn" style="display:none">🖼 Посмотреть</button>
     </div>
 </div>
 <!-- БОКОВОЕ МЕНЮ -->
@@ -171,6 +172,12 @@
     document.getElementById("charRole").textContent = char.role || "";
     if (char.portrait) {
         document.getElementById("charHero").style.backgroundImage = `url('${char.portrait}')`;
+    }
+    if (char.portrait) {
+        document.getElementById("charHero").style.backgroundImage = `url('${char.portrait}')`;
+        const viewBtn = document.getElementById("viewPortraitBtn");
+        viewBtn.style.display = "inline-block";
+        viewBtn.addEventListener("click", () => openLightbox(char.portrait));
     }
 
     const pagesQuery = query(collection(db, "pages"), where("characterId", "==", charId));
@@ -577,7 +584,6 @@
             window.location.reload();
         });
     }
-    //загрузка страницы
     function loadPage(page) {
         currentPageId = page.id;
         const content = document.getElementById("pageContent");
@@ -585,44 +591,115 @@
         const displayContent = (page.content || "").replace(
             /:::(.*?)===([\s\S]*?):::/g,
             (match, title, accContent) => `
-            <div class="accordion-block">
-                <details class="accordion-details">
-                    <summary class="accordion-summary">${title.trim()}</summary>
-                    <div class="accordion-content">${accContent.trim()}</div>
-                </details>
-            </div>
+        <div class="accordion-block">
+            <details class="accordion-details">
+                <summary class="accordion-summary">${title.trim()}</summary>
+                <div class="accordion-content">${accContent.trim()}</div>
+            </details>
+        </div>
         `
         );
 
+
+
         content.innerHTML = `
-    ${page.cover ? `<img src="${page.cover}" class="page-cover-img">` : ""}
-    <div class="page-header-row">
-        <h1 class="page-title">${page.title}</h1>
-        ${auth.currentUser?.email === ADMIN_EMAIL ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
-        <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
-    </div>
-    <div class="page-body" id="pageBody">${displayContent}</div>
-    <div class="page-update-info">
-    <div class="page-update-line"></div>
-    <span>
-            Обновлено: ${
-            page.updatedAt?.toDate
-                ? page.updatedAt.toDate().toLocaleDateString("ru-RU")
-                : "—"
-        }
-        </span>
-    </div>
-    ${auth.currentUser?.email === ADMIN_EMAIL ? `
-        <div class="edit-toolbar" id="editToolbar" style="display:none">
-            <div id="inlineEditor"></div>
-            <div class="edit-actions">
-                <button class="auth-btn" id="saveInlineBtn">Сохранить</button>
-                <button class="nav-btn logout-btn" id="cancelInlineBtn">Отмена</button>
+            ${page.cover ? `<img src="${page.cover}" class="page-cover-img">` : ""}
+            <div class="page-header-row">
+                <h1 class="page-title">${page.title}</h1>
+                ${auth.currentUser?.email === ADMIN_EMAIL ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
+                <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
             </div>
-            <p class="auth-error" id="inlineError"></p>
-        </div>
-        ` : ""}
-    `;
+            <div class="page-body-wrap ${page.showPortrait ? 'has-portrait' : ''}">
+                ${page.showPortrait ? `
+                    <div class="char-card-block" id="charCardBlock">
+                        <div class="char-card-portrait-wrap">
+                            <img src="${page.pagePortrait || char.portrait || ''}" class="char-card-portrait" id="pagePortraitImg"
+                                onclick="openLightbox('${page.pagePortrait || char.portrait || ''}')">
+                            ${auth.currentUser?.email === ADMIN_EMAIL ? `
+                                <button class="portrait-change-btn" id="portraitChangeBtn">🖼 Заменить</button>
+                                <input type="file" id="portraitFileInput" accept="image/*" style="display:none">
+                            ` : ""}
+                        </div>
+                        <div class="char-card-info">
+                            <div class="char-card-row">
+                                <span class="char-card-label">Другие имена</span>
+                                    <span class="char-card-value" id="cardAliases">${page.charCard?.aliases || '—'}</span>
+                            </div>
+                            <div class="char-card-row">
+                                    <span class="char-card-label">Дата рождения</span>
+                                    <span class="char-card-value char-card-spoiler hidden" id="cardBirth">${page.charCard?.birth || '—'}</span>
+                            </div>
+                            <div class="char-card-row">
+                                <span class="char-card-label">Возраст</span>
+                                <span class="char-card-value char-card-spoiler hidden" id="cardAge">${page.charCard?.age || '—'}</span>
+                            </div>
+                            <div class="char-card-row">
+                                <span class="char-card-label">Рост</span>
+                                <span class="char-card-value char-card-spoiler hidden" id="cardHeight">${page.charCard?.height || '—'}</span>
+                            </div>
+                            <div class="char-card-row">
+                                <span class="char-card-label">Статус</span>
+                                <span class="char-card-status" id="cardStatus" data-status="${page.charCard?.status || ''}">${page.charCard?.status || '—'}</span>
+                            </div>
+                            ${auth.currentUser?.email === ADMIN_EMAIL ? `
+                            <button class="char-card-edit-btn" id="charCardEditBtn">✏️ Редактировать</button>
+                            <div class="char-card-edit-form" id="charCardEditForm" style="display:none">
+                                <input type="text" class="auth-input" id="cardEditAliases" placeholder="Другие имена" value="${page.charCard?.aliases || ''}">
+                                <input type="text" class="auth-input" id="cardEditBirth" placeholder="Дата рождения" value="${page.charCard?.birth || ''}">
+                                <input type="text" class="auth-input" id="cardEditAge" placeholder="Возраст" value="${page.charCard?.age || ''}">
+                                <input type="text" class="auth-input" id="cardEditHeight" placeholder="Рост" value="${page.charCard?.height || ''}">
+                                <select class="auth-input" id="cardEditStatus">
+                                    <option value="">— Статус —</option>
+                                    <option value="жив" ${page.charCard?.status === 'жив' ? 'selected' : ''}>жив</option>
+                                    <option value="мёртв" ${page.charCard?.status === 'мёртв' ? 'selected' : ''}>мёртв</option>
+                                    <option value="обездушен" ${page.charCard?.status === 'обездушен' ? 'selected' : ''}>обездушен</option>
+                                    <option value="неизвестно" ${page.charCard?.status === 'неизвестно' ? 'selected' : ''}>неизвестно</option>
+                                    <option value="исчез" ${page.charCard?.status === 'исчез' ? 'selected' : ''}>Исчез</option>
+                                    <option value="перерождён" ${page.charCard?.status === 'перерождён' ? 'selected' : ''}>перерождён</option>
+                                    <option value="запечатан" ${page.charCard?.status === 'запечатан' ? 'selected' : ''}>запечатан</option>
+                                    <option value="проклят" ${page.charCard?.status === 'проклят' ? 'selected' : ''}>проклят</option>
+                                    <option value="стал духом" ${page.charCard?.status === 'стал духом' ? 'selected' : ''}>стал духом</option>
+                                    <option value="лишён оболочки" ${page.charCard?.status === 'лишён оболочки' ? 'selected' : ''}>лишён оболочки</option>
+                                    <option value="неактивен" ${page.charCard?.status === 'неактивен' ? 'selected' : ''}>неактивен</option>
+                                </select>
+                            <input type="text" class="auth-input" id="cardEditCustomStatus" placeholder="Свой статус (если нет в списке)" value="">
+                            <button class="auth-btn" id="charCardSaveBtn" style="margin-top:8px">Сохранить</button>
+                        </div>
+                    ` : ""}
+                    </div>
+                    </div>
+            ` : ""}
+                <div class="page-body" id="pageBody">${displayContent}</div>
+            </div>
+            ${auth.currentUser?.email === ADMIN_EMAIL ? `
+                <div class="edit-toolbar" id="editToolbar" style="display:none">
+                    <div id="inlineEditor"></div>
+                    <div class="edit-actions">
+                        <button class="auth-btn" id="saveInlineBtn">Сохранить</button>
+                        <button class="nav-btn logout-btn" id="cancelInlineBtn">Отмена</button>
+                    </div>
+                    <p class="auth-error" id="inlineError"></p>
+                </div>
+            ` : ""}
+            ${page.gallery?.length ? `
+                <div class="page-gallery">
+                    <h3 class="page-gallery-title">Галерея</h3>
+                    <div class="page-gallery-grid">
+                        ${page.gallery.map(url => `
+                            <img src="${url}" class="page-gallery-thumb" onclick="openLightbox('${url}')">
+                        `).join("")}
+                    </div>
+                </div>
+            ` : ""}
+            <div class="page-update-info">
+            <div class="page-update-line"></div>
+                <span>Обновлено: ${
+                    page.updatedAt?.toDate
+                        ? page.updatedAt.toDate().toLocaleDateString("ru-RU")
+                        : "—"
+                }</span>
+            </div>
+        `;
 
         setTimeout(() => {
             initTooltips(db, "#pageBody");
@@ -1512,6 +1589,83 @@
             clearTimeout(_clickTimer);
             _clickTimer = setTimeout(() => { _clickCount = 0; }, 500);
         }
+    });
+
+    window.openLightbox = function(src) {
+        const lb = document.createElement("div");
+        lb.className = "lightbox";
+        lb.innerHTML = `
+        <button class="lightbox-close">✕</button>
+        <img src="${src}" alt="">
+    `;
+        document.body.appendChild(lb);
+        lb.addEventListener("click", (e) => { if (e.target === lb) lb.remove(); });
+        lb.querySelector(".lightbox-close").addEventListener("click", () => lb.remove());
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") lb.remove();
+        }, { once: true });
+    }
+
+    //замена портрета на странице
+    const portraitChangeBtn = document.getElementById("portraitChangeBtn");
+    const portraitFileInput = document.getElementById("portraitFileInput");
+
+    portraitChangeBtn?.addEventListener("click", () => {
+        portraitFileInput.click();
+    });
+
+    portraitFileInput?.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        portraitChangeBtn.textContent = "Загружаем...";
+        const url = await uploadFile(file);
+        await updateDoc(doc(db, "pages", currentPageId), { pagePortrait: url });
+        document.getElementById("pagePortraitImg").src = url;
+        document.getElementById("pagePortraitImg").onclick = () => openLightbox(url);
+        portraitChangeBtn.textContent = "🖼 Заменить";
+    });
+
+    //КАРТОЧКА ПЕРСА
+    //спойлеры карточки
+    document.querySelectorAll(".char-card-spoiler").forEach(el => {
+        el.addEventListener("click", () => el.classList.toggle("hidden"));
+    });
+
+    //редактирование карточки
+    const charCardEditBtn = document.getElementById("charCardEditBtn");
+    const charCardEditForm = document.getElementById("charCardEditForm");
+
+    charCardEditBtn?.addEventListener("click", () => {
+        const isOpen = charCardEditForm.style.display !== "none";
+        charCardEditForm.style.display = isOpen ? "none" : "flex";
+        charCardEditBtn.textContent = isOpen ? "✏️ Редактировать" : "✕ Закрыть";
+    });
+
+    document.getElementById("charCardSaveBtn")?.addEventListener("click", async () => {
+        const statusSelect = document.getElementById("cardEditStatus").value;
+        const statusCustom = document.getElementById("cardEditCustomStatus").value.trim();
+        const status = statusCustom || statusSelect;
+
+        const charCard = {
+            aliases: document.getElementById("cardEditAliases").value.trim(),
+            birth: document.getElementById("cardEditBirth").value.trim(),
+            age: document.getElementById("cardEditAge").value.trim(),
+            height: document.getElementById("cardEditHeight").value.trim(),
+            status
+        };
+        await updateDoc(doc(db, "pages", currentPageId), { charCard });
+
+        document.getElementById("cardAliases").textContent = charCard.aliases || "—";
+        document.getElementById("cardBirth").textContent = charCard.birth || "—";
+        document.getElementById("cardAge").textContent = charCard.age || "—";
+        document.getElementById("cardHeight").textContent = charCard.height || "—";
+
+        const statusEl = document.getElementById("cardStatus");
+        statusEl.textContent = charCard.status || "—";
+        statusEl.dataset.status = charCard.status || "";
+
+        charCardEditForm.style.display = "none";
+        charCardEditBtn.textContent = "✏️ Редактировать";
     });
 
 

@@ -755,6 +755,7 @@ h1, h2, h3, h4,
     margin: 16px 0;
 }
 
+
 .page-body h1, .page-body h2, .page-body h3 {
     margin: 24px 0 12px;
     color: var(--text);
@@ -2917,3 +2918,360 @@ html {
     );
 }
 /*--------------------------------------------*/
+/* ПРОСМОТР ФОТО */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+    cursor: default;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 32px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.lightbox-close:hover {
+    opacity: 1;
+}
+/*--------------------------------------------*/
+/* НАСТРОЙКИ СТРАНИЦЫ */
+.page-options {
+    background: var(--bg-input);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.page-option-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.page-option-label input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+}
+
+.gallery-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.gallery-preview-thumb {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+/*--*/
+/* ПОРТРЕТЫ И ГАЛЕРЕЯ */
+.page-body-wrap {
+    position: relative;
+}
+
+.page-body-wrap.has-portrait {
+    display: flow-root;
+}
+
+.page-portrait-float {
+    float: none;
+    margin: 0;
+    display: block;
+    max-width: 100%;
+}
+
+.page-body-wrap.has-portrait::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+
+.page-portrait-float:hover {
+    transform: scale(1.02);
+}
+
+.page-gallery {
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+}
+
+.page-gallery-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text);
+}
+
+.page-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.page-gallery-thumb {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: zoom-in;
+    border: 1px solid var(--border);
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.page-gallery-thumb:hover {
+    transform: scale(1.03);
+    border-color: var(--accent);
+}
+/**/
+.view-portrait-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 12px;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+}
+
+.view-portrait-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+/**/
+.portrait-wrap {
+    float: right;
+    margin: 0 0 16px 24px;
+    position: relative;
+    width: 220px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.portrait-wrap .page-portrait-float {
+    float: none;
+    margin: 0;
+    display: block;
+}
+
+.portrait-change-btn {
+    width: 100%;
+    background: rgba(0,0,0,0.6);
+    border: none;
+    color: #fff;
+    font-size: 12px;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 0 0 10px 10px;
+    transition: background 0.2s;
+}
+
+.portrait-change-btn:hover {
+    background: rgba(79,110,247,0.8);
+}
+
+.page-body-wrap.has-portrait {
+    margin-left: auto;
+    margin-right: auto;
+    width: calc(100% - 110px);
+    box-sizing: border-box;
+}
+
+
+/*тестовая хуйня (рамки)
+.page-body-wrap.has-portrait {
+    outline: 2px solid red !important;
+}
+
+.portrait-wrap {
+    outline: 2px solid lime !important;
+}
+
+.work-content {
+    outline: 2px solid blue !important;
+}
+*/
+/*------------------------------------*/
+/* БЛОК ИНФЫ ПЕРСА */
+.char-card-block {
+    float: right;
+    width: 240px;
+    margin: 0 0 20px 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.char-card-portrait-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.char-card-portrait {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    cursor: zoom-in;
+    transition: transform 0.2s;
+}
+
+.char-card-portrait:hover {
+    transform: scale(1.02);
+}
+
+.char-card-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.char-card-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.char-card-row:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.char-card-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.char-card-value {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+}
+
+.char-card-value.spoiler.hidden {
+    background: var(--text-muted);
+    border-radius: 4px;
+    color: transparent;
+    font-size: 0;
+    padding: 2px 8px;
+    cursor: pointer;
+}
+
+.char-card-value.spoiler.hidden::after {
+    content: "[ Спойлер ]";
+    font-size: 11px;
+    color: var(--bg-card);
+    font-weight: 700;
+}
+
+.char-card-edit-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 4px;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.char-card-edit-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.char-card-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.char-card-edit-form .auth-input {
+    font-size: 12px;
+    padding: 6px 10px;
+    margin-bottom: 0;
+}
+
+.char-card-spoiler {
+    cursor: pointer;
+    user-select: none;
+}
+
+.char-card-spoiler.hidden {
+    background: var(--text-muted);
+    border-radius: 4px;
+    color: transparent !important;
+    font-size: 0 !important;
+    padding: 2px 8px;
+    display: inline-block;
+    min-width: 60px;
+    min-height: 16px;
+}
+
+.char-card-spoiler.hidden::after {
+    content: "[ Спойлер ]";
+    font-size: 11px;
+    color: var(--bg-card);
+    font-weight: 700;
+}
+
+.char-card-status[data-status="жив"] { color: #4caf50; font-weight: 600; }
+.char-card-status[data-status="мёртв"] { color: #303030; font-weight: 600; }
+.char-card-status[data-status="обездушен"] { color: #9e9e9e; font-weight: 600; }
+.char-card-status[data-status="неизвестно"] { color: var(--text-muted); font-weight: 600; }
+.char-card-status[data-status="исчез"] { color: #ff9800; font-weight: 600; }
+.char-card-status[data-status="перерождён"] { color: #d7e336; font-weight: 600; }
+.char-card-status[data-status="запечатан"] { color: #e36236; font-weight: 600; }
+.char-card-status[data-status="проклят"] { color: #4a4a4a; font-weight: 600; }
+.char-card-status[data-status="лишён оболочки"] { color: #424242; font-weight: 600; }
+.char-card-status[data-status="стал духом"] { color: #bdbdbd; font-weight: 600; }
+.char-card-status[data-status="неактивен"] { color: #bdbdbd; font-weight: 600; }
