@@ -91,7 +91,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, addDoc, deleteDoc, collection, query, where, orderBy, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, addDoc, deleteDoc, collection, query, where, orderBy, getDocs, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
@@ -155,7 +155,7 @@
             return segment;
         }).join(".");
     }
-    //массив для карточки перса
+    //массив для карточки перса ака хэлперы
     const STATUSES = ["жив", "мёртв", "обездушен", "неизвестно", "исчез", "перерождён",
         "запечатан", "проклят", "стал духом", "лишён оболочки", "неактивен"];
 
@@ -189,6 +189,39 @@
         } else if (!el.classList.contains("char-card-spoiler")) {
             el.classList.add("char-card-spoiler", "hidden");
         }
+    }
+
+    function showSpoilerGate(page) {
+        if (!page.hasSpoilers) return;
+        try {
+            if (sessionStorage.getItem("spoilerOk")) return;
+        } catch (e) {}
+
+        const gate = document.createElement("div");
+        gate.className = "spoiler-gate";
+        gate.innerHTML = `
+        <div class="spoiler-gate-box">
+            <div class="spoiler-gate-icon">⚠️</div>
+            <h2>Впереди спойлеры</h2>
+            <p>Эта страница раскрывает важные события сюжета. Продолжить?</p>
+            <div class="spoiler-gate-actions">
+                <button class="auth-btn" id="spoilerOkBtn">Показать</button>
+                <button class="nav-btn" id="spoilerBackBtn">Назад</button>
+            </div>
+        </div>`;
+        document.body.appendChild(gate);
+        document.body.style.overflow = "hidden";
+
+        document.getElementById("spoilerOkBtn").addEventListener("click", () => {
+            try { sessionStorage.setItem("spoilerOk", "1"); } catch (e) {}
+            gate.remove();
+            document.body.style.overflow = "";
+        });
+
+        document.getElementById("spoilerBackBtn").addEventListener("click", () => {
+            if (history.length > 1) history.back();
+            else location.href = "index.html"; // поставь свою главную
+        });
     }
 
     //-проверка и загрузка страницы-
@@ -634,7 +667,7 @@
         </div>
         `
         );
-
+        showSpoilerGate(page);
         content.innerHTML = `
             ${page.cover ? `<img src="${page.cover}" class="page-cover-img">` : ""}
             <div class="page-header-row">
@@ -702,6 +735,19 @@
             ${auth.currentUser?.email === ADMIN_EMAIL ? `
                 <div class="edit-toolbar" id="editToolbar" style="display:none">
                     <div id="inlineEditor"></div>
+                    <label class="spoiler-flag">
+                    <input type="checkbox" id="editHasSpoilers" ${page.hasSpoilers ? "checked" : ""}>
+                    Спойлер-плажка
+                    </label>
+                    <label class="spoiler-flag">
+                    <input type="checkbox" id="editShowPortrait" ${page.showPortrait ? "checked" : ""}>
+                    Портрет
+                    </label>
+                    <div class="gallery-edit">
+                        <button type="button" class="nav-btn" id="galleryAddBtn">Галерея</button>
+                        <input type="file" id="galleryFileInput" accept="image/*" multiple style="display:none">
+                        <span id="galleryStatus" class="gallery-status"></span>
+                    </div>
                     <div class="edit-actions">
                         <button class="auth-btn" id="saveInlineBtn">Сохранить</button>
                         <button class="nav-btn logout-btn" id="cancelInlineBtn">Отмена</button>
@@ -1042,8 +1088,15 @@
 
                 const newContent = tempDiv.innerHTML.replace(/\t/g, '&nbsp;&nbsp;&nbsp;');
 
-                await updateDoc(doc(db, "pages", currentPageId), { content: newContent, updatedAt: new Date() });
+                const hasSpoilers = document.getElementById("editHasSpoilers").checked;
+
+                await updateDoc(doc(db, "pages", currentPageId), {
+                    content: newContent,
+                    hasSpoilers,
+                    updatedAt: new Date()
+                });
                 page.content = newContent;
+                page.hasSpoilers = hasSpoilers;
 
                 const displayContent = newContent.replace(
                     /:::(.*?)===([\s\S]*?):::/g,
@@ -1634,23 +1687,54 @@
         }, { once: true });
     }
 
-    //замена портрета на странице
-    const portraitChangeBtn = document.getElementById("portraitChangeBtn");
-    const portraitFileInput = document.getElementById("portraitFileInput");
-
-    portraitChangeBtn?.addEventListener("click", () => {
-        portraitFileInput.click();
+    //замена портрета и добавление в галерею
+    document.addEventListener("click", e => {
+        if (e.target.id === "portraitChangeBtn") {
+            document.getElementById("portraitFileInput")?.click();
+        }
+        if (e.target.id === "galleryAddBtn") {
+            document.getElementById("galleryFileInput")?.click();
+        }
     });
 
-    portraitFileInput?.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        portraitChangeBtn.textContent = "Загружаем...";
-        const url = await uploadFile(file);
-        await updateDoc(doc(db, "pages", currentPageId), { pagePortrait: url });
-        document.getElementById("pagePortraitImg").src = url;
-        document.getElementById("pagePortraitImg").onclick = () => openLightbox(url);
-        portraitChangeBtn.textContent = "🖼 Заменить";
+    document.addEventListener("change", async e => {
+        //портрет
+        if (e.target.id === "portraitFileInput") {
+            const file = e.target.files[0];
+            if (!file) return;
+            const btn = document.getElementById("portraitChangeBtn");
+            try {
+                btn.textContent = "Загружаем...";
+                const url = await uploadFile(file);
+                await updateDoc(doc(db, "pages", currentPageId), { pagePortrait: url });
+                const img = document.getElementById("pagePortraitImg");
+                img.src = url;
+                img.onclick = () => openLightbox(url);
+                btn.textContent = "🖼 Заменить";
+            } catch (err) {
+                console.error("portrait error:", err);
+                btn.textContent = "Ошибка: " + err.message;
+            }
+            e.target.value = "";
+        }
+
+        // галерея
+        if (e.target.id === "galleryFileInput") {
+            const files = [...e.target.files];
+            if (!files.length) return;
+            const statusEl = document.getElementById("galleryStatus");
+            try {
+                const urls = [];
+                for (let i = 0; i < files.length; i++) {
+                    statusEl.textContent = `Загружаем ${i + 1} из ${files.length}...`;
+                    urls.push(await uploadFile(files[i]));
+                }
+                await updateDoc(doc(db, "pages", currentPageId), { gallery: arrayUnion(...urls) });
+                location.reload();
+            } catch (err) {
+                statusEl.textContent = "Ошибка: " + err.message;
+            }
+        }
     });
 
     //КАРТОЧКА ПЕРСА
@@ -1660,54 +1744,55 @@
         if (el) el.classList.toggle("hidden");
     });
 
-    //редактирование карточки
-    const charCardEditBtn = document.getElementById("charCardEditBtn");
-    const charCardEditForm = document.getElementById("charCardEditForm");
+    //редактирование карточки (работает после любой перерисовки)
+    document.addEventListener("click", async e => {
+        // открыть/закрыть форму
+        const editBtn = e.target.closest("#charCardEditBtn");
+        if (editBtn) {
+            const form = document.getElementById("charCardEditForm");
+            const isOpen = form.style.display !== "none";
+            form.style.display = isOpen ? "none" : "flex";
+            editBtn.textContent = isOpen ? "✏️ Редактировать" : "✕ Закрыть";
+            return;
+        }
 
-    charCardEditBtn?.addEventListener("click", () => {
-        const isOpen = charCardEditForm.style.display !== "none";
-        charCardEditForm.style.display = isOpen ? "none" : "flex";
-        charCardEditBtn.textContent = isOpen ? "✏️ Редактировать" : "✕ Закрыть";
-    });
+        // сохранить
+        if (e.target.closest("#charCardSaveBtn")) {
+            const checked = [...document.querySelectorAll("#cardEditStatus input:checked")].map(i => i.value);
+            const custom = document.getElementById("cardEditCustomStatus").value
+                .split(",").map(s => s.trim()).filter(Boolean);
+            const status = [...new Set([...checked, ...custom])];
 
-    document.getElementById("charCardSaveBtn")?.addEventListener("click", async () => {
-        const checked = [...document.querySelectorAll("#cardEditStatus input:checked")].map(i => i.value);
-        const custom = document.getElementById("cardEditCustomStatus").value
-            .split(",").map(s => s.trim()).filter(Boolean);
-        const status = [...new Set([...checked, ...custom])];
+            const charCard = {
+                aliases: document.getElementById("cardEditAliases").value.trim(),
+                birth: document.getElementById("cardEditBirth").value.trim(),
+                age: document.getElementById("cardEditAge").value.trim(),
+                height: document.getElementById("cardEditHeight").value.trim(),
+                status
+            };
+            await updateDoc(doc(db, "pages", currentPageId), { charCard });
 
-        const charCard = {
-            aliases: document.getElementById("cardEditAliases").value.trim(),
-            birth: document.getElementById("cardEditBirth").value.trim(),
-            age: document.getElementById("cardEditAge").value.trim(),
-            height: document.getElementById("cardEditHeight").value.trim(),
-            status
-        };
-        await updateDoc(doc(db, "pages", currentPageId), { charCard });
-        const birthEl = document.getElementById("cardBirth");
-        birthEl.textContent = charCard.birth || "—";
-        applySpoiler(birthEl, charCard.birth);
+            document.getElementById("cardAliases").textContent = charCard.aliases || "—";
 
-        const ageEl = document.getElementById("cardAge");
-        ageEl.textContent = charCard.age || "—";
-        applySpoiler(ageEl, charCard.age);
+            const birthEl = document.getElementById("cardBirth");
+            birthEl.textContent = charCard.birth || "—";
+            applySpoiler(birthEl, charCard.birth);
 
-        const heightEl = document.getElementById("cardHeight");
-        heightEl.textContent = charCard.height || "—";
-        applySpoiler(heightEl, charCard.height);
+            const ageEl = document.getElementById("cardAge");
+            ageEl.textContent = charCard.age || "—";
+            applySpoiler(ageEl, charCard.age);
 
-        const statusEl = document.getElementById("cardStatus");
-        statusEl.innerHTML = renderStatuses(charCard.status);
-        applySpoiler(statusEl, charCard.status);
+            const heightEl = document.getElementById("cardHeight");
+            heightEl.textContent = charCard.height || "—";
+            applySpoiler(heightEl, charCard.height);
 
-        document.getElementById("cardAliases").textContent = charCard.aliases || "—";
-        document.getElementById("cardBirth").textContent = charCard.birth || "—";
-        document.getElementById("cardAge").textContent = charCard.age || "—";
-        document.getElementById("cardHeight").textContent = charCard.height || "—";
-        document.getElementById("cardStatus").innerHTML = renderStatuses(charCard.status);
+            const statusEl = document.getElementById("cardStatus");
+            statusEl.innerHTML = renderStatuses(charCard.status);
+            applySpoiler(statusEl, charCard.status);
 
-        charCardEditForm.style.display = "none";
-        charCardEditBtn.textContent = "✏️ Редактировать";
+            document.getElementById("charCardEditForm").style.display = "none";
+            document.getElementById("charCardEditBtn").textContent = "✏️ Редактировать";
+        }
     });
 
 
