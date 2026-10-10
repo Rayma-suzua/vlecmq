@@ -155,6 +155,41 @@
             return segment;
         }).join(".");
     }
+    //массив для карточки перса
+    const STATUSES = ["жив", "мёртв", "обездушен", "неизвестно", "исчез", "перерождён",
+        "запечатан", "проклят", "стал духом", "лишён оболочки", "неактивен"];
+
+    function normalizeStatus(value) {
+        if (Array.isArray(value)) return value;
+        if (!value) return [];
+        return [value]; // старый формат: одна строка
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c =>
+            ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function renderStatuses(value) {
+        const list = normalizeStatus(value);
+        if (!list.length) return "—";
+        return list.map(s =>
+            `<span class="char-card-status" data-status="${escapeHtml(s)}">${escapeHtml(s)}</span>`
+        ).join('<span class="status-sep">, </span>');
+    }
+
+    function isUnknown(value) {
+        const list = Array.isArray(value) ? value : [value];
+        return list.some(s => String(s ?? "").trim().toLowerCase() === "неизвестно");
+    }
+
+    function applySpoiler(el, value) {
+        if (isUnknown(value)) {
+            el.classList.remove("char-card-spoiler", "hidden");
+        } else if (!el.classList.contains("char-card-spoiler")) {
+            el.classList.add("char-card-spoiler", "hidden");
+        }
+    }
 
     //-проверка и загрузка страницы-
     const params = new URLSearchParams(window.location.search);
@@ -600,8 +635,6 @@
         `
         );
 
-
-
         content.innerHTML = `
             ${page.cover ? `<img src="${page.cover}" class="page-cover-img">` : ""}
             <div class="page-header-row">
@@ -623,23 +656,23 @@
                         <div class="char-card-info">
                             <div class="char-card-row">
                                 <span class="char-card-label">Другие имена</span>
-                                    <span class="char-card-value" id="cardAliases">${page.charCard?.aliases || '—'}</span>
+                                <span class="char-card-value" id="cardAliases">${page.charCard?.aliases || '—'}</span>
                             </div>
                             <div class="char-card-row">
                                     <span class="char-card-label">Дата рождения</span>
-                                    <span class="char-card-value char-card-spoiler hidden" id="cardBirth">${page.charCard?.birth || '—'}</span>
+                                    <span class="char-card-value ${isUnknown(page.charCard?.birth) ? '' : 'char-card-spoiler hidden'}" id="cardBirth">${page.charCard?.birth || '—'}</span>
                             </div>
                             <div class="char-card-row">
                                 <span class="char-card-label">Возраст</span>
-                                <span class="char-card-value char-card-spoiler hidden" id="cardAge">${page.charCard?.age || '—'}</span>
+                                <span class="char-card-value ${isUnknown(page.charCard?.age) ? '' : 'char-card-spoiler hidden'}" id="cardAge">${page.charCard?.age || '—'}</span>
                             </div>
                             <div class="char-card-row">
                                 <span class="char-card-label">Рост</span>
-                                <span class="char-card-value char-card-spoiler hidden" id="cardHeight">${page.charCard?.height || '—'}</span>
+                                <span class="char-card-value ${isUnknown(page.charCard?.height) ? '' : 'char-card-spoiler hidden'}" id="cardHeight">${page.charCard?.height || '—'}</span>
                             </div>
                             <div class="char-card-row">
                                 <span class="char-card-label">Статус</span>
-                                <span class="char-card-status" id="cardStatus" data-status="${page.charCard?.status || ''}">${page.charCard?.status || '—'}</span>
+                                <span class="char-card-value ${isUnknown(page.charCard?.status) ? '' : 'char-card-spoiler hidden'}" id="cardStatus">${renderStatuses(page.charCard?.status)}</span>
                             </div>
                             ${auth.currentUser?.email === ADMIN_EMAIL ? `
                             <button class="char-card-edit-btn" id="charCardEditBtn">✏️ Редактировать</button>
@@ -648,21 +681,16 @@
                                 <input type="text" class="auth-input" id="cardEditBirth" placeholder="Дата рождения" value="${page.charCard?.birth || ''}">
                                 <input type="text" class="auth-input" id="cardEditAge" placeholder="Возраст" value="${page.charCard?.age || ''}">
                                 <input type="text" class="auth-input" id="cardEditHeight" placeholder="Рост" value="${page.charCard?.height || ''}">
-                                <select class="auth-input" id="cardEditStatus">
-                                    <option value="">— Статус —</option>
-                                    <option value="жив" ${page.charCard?.status === 'жив' ? 'selected' : ''}>жив</option>
-                                    <option value="мёртв" ${page.charCard?.status === 'мёртв' ? 'selected' : ''}>мёртв</option>
-                                    <option value="обездушен" ${page.charCard?.status === 'обездушен' ? 'selected' : ''}>обездушен</option>
-                                    <option value="неизвестно" ${page.charCard?.status === 'неизвестно' ? 'selected' : ''}>неизвестно</option>
-                                    <option value="исчез" ${page.charCard?.status === 'исчез' ? 'selected' : ''}>Исчез</option>
-                                    <option value="перерождён" ${page.charCard?.status === 'перерождён' ? 'selected' : ''}>перерождён</option>
-                                    <option value="запечатан" ${page.charCard?.status === 'запечатан' ? 'selected' : ''}>запечатан</option>
-                                    <option value="проклят" ${page.charCard?.status === 'проклят' ? 'selected' : ''}>проклят</option>
-                                    <option value="стал духом" ${page.charCard?.status === 'стал духом' ? 'selected' : ''}>стал духом</option>
-                                    <option value="лишён оболочки" ${page.charCard?.status === 'лишён оболочки' ? 'selected' : ''}>лишён оболочки</option>
-                                    <option value="неактивен" ${page.charCard?.status === 'неактивен' ? 'selected' : ''}>неактивен</option>
-                                </select>
-                            <input type="text" class="auth-input" id="cardEditCustomStatus" placeholder="Свой статус (если нет в списке)" value="">
+                                <div class="status-checkboxes" id="cardEditStatus">
+                                ${STATUSES.map(s => `
+                                    <label class="status-option">
+                                        <input type="checkbox" value="${s}" ${normalizeStatus(page.charCard?.status).includes(s) ? "checked" : ""}>
+                                        ${s}
+                                    </label>`).join("")}
+                                </div>
+                                <input type="text" class="auth-input" id="cardEditCustomStatus"
+                                    placeholder="Свои статусы через запятую"
+                                    value="${escapeHtml(normalizeStatus(page.charCard?.status).filter(s => !STATUSES.includes(s)).join(', '))}">
                             <button class="auth-btn" id="charCardSaveBtn" style="margin-top:8px">Сохранить</button>
                         </div>
                     ` : ""}
@@ -1627,8 +1655,9 @@
 
     //КАРТОЧКА ПЕРСА
     //спойлеры карточки
-    document.querySelectorAll(".char-card-spoiler").forEach(el => {
-        el.addEventListener("click", () => el.classList.toggle("hidden"));
+    document.addEventListener("click", e => {
+        const el = e.target.closest(".char-card-spoiler");
+        if (el) el.classList.toggle("hidden");
     });
 
     //редактирование карточки
@@ -1642,9 +1671,10 @@
     });
 
     document.getElementById("charCardSaveBtn")?.addEventListener("click", async () => {
-        const statusSelect = document.getElementById("cardEditStatus").value;
-        const statusCustom = document.getElementById("cardEditCustomStatus").value.trim();
-        const status = statusCustom || statusSelect;
+        const checked = [...document.querySelectorAll("#cardEditStatus input:checked")].map(i => i.value);
+        const custom = document.getElementById("cardEditCustomStatus").value
+            .split(",").map(s => s.trim()).filter(Boolean);
+        const status = [...new Set([...checked, ...custom])];
 
         const charCard = {
             aliases: document.getElementById("cardEditAliases").value.trim(),
@@ -1654,15 +1684,27 @@
             status
         };
         await updateDoc(doc(db, "pages", currentPageId), { charCard });
+        const birthEl = document.getElementById("cardBirth");
+        birthEl.textContent = charCard.birth || "—";
+        applySpoiler(birthEl, charCard.birth);
+
+        const ageEl = document.getElementById("cardAge");
+        ageEl.textContent = charCard.age || "—";
+        applySpoiler(ageEl, charCard.age);
+
+        const heightEl = document.getElementById("cardHeight");
+        heightEl.textContent = charCard.height || "—";
+        applySpoiler(heightEl, charCard.height);
+
+        const statusEl = document.getElementById("cardStatus");
+        statusEl.innerHTML = renderStatuses(charCard.status);
+        applySpoiler(statusEl, charCard.status);
 
         document.getElementById("cardAliases").textContent = charCard.aliases || "—";
         document.getElementById("cardBirth").textContent = charCard.birth || "—";
         document.getElementById("cardAge").textContent = charCard.age || "—";
         document.getElementById("cardHeight").textContent = charCard.height || "—";
-
-        const statusEl = document.getElementById("cardStatus");
-        statusEl.textContent = charCard.status || "—";
-        statusEl.dataset.status = charCard.status || "";
+        document.getElementById("cardStatus").innerHTML = renderStatuses(charCard.status);
 
         charCardEditForm.style.display = "none";
         charCardEditBtn.textContent = "✏️ Редактировать";
