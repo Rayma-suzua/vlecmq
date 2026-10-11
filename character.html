@@ -156,13 +156,13 @@
         }).join(".");
     }
     //массив для карточки перса ака хэлперы
-    const STATUSES = ["жив", "жива", "мёртв", "обездушен", "неизвестно", "исчез", "перерождён",
+    const STATUSES = ["жив", "жива", "мёртв", "мёртва", "обездушен", "неизвестно", "исчез", "перерождён",
         "запечатан", "проклят", "стал духом", "лишён оболочки", "неактивен"];
 
     function normalizeStatus(value) {
         if (Array.isArray(value)) return value;
         if (!value) return [];
-        return [value]; // старый формат: одна строка
+        return [value];
     }
 
     function escapeHtml(s) {
