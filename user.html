@@ -90,7 +90,7 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const ADMIN_EMAIL = "nopefakewhadouwantfrome@gmail.com";
+  const ADMIN_UID = "9jPX9LEJz5dlbHe2sUbXO4SfzJ02";
 
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("id");
@@ -99,7 +99,7 @@
   onAuthStateChanged(auth, async (user) => {
     const authButtons = document.getElementById("authButtons");
     if (user) {
-      const isAdmin = user.email === ADMIN_EMAIL;
+      const isAdmin = user.email === ADMIN_UID;
       authButtons.innerHTML = `
                 ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
                 <a href="profile.html" class="nav-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted)">Профиль</a>

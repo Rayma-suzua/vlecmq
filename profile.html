@@ -81,7 +81,7 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const ADMIN_EMAIL = "nopefakewhadouwantfrome@gmail.com";
+  const ADMIN_UID = "9jPX9LEJz5dlbHe2sUbXO4SfzJ02";
 
   async function uploadFile(file) {
     const formData = new FormData();
@@ -101,7 +101,7 @@
       return;
     }
 
-    const isAdmin = user.email === ADMIN_EMAIL;
+    const isAdmin = user.email === ADMIN_UID;
     const authButtons = document.getElementById("authButtons");
     //проверка бана
     onSnapshot(doc(db, "users", user.uid), async (snap) => {

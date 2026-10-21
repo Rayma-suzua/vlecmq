@@ -199,7 +199,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const ADMIN_EMAIL = "nopefakewhadouwantfrome@gmail.com";
+    const ADMIN_UID = "9jPX9LEJz5dlbHe2sUbXO4SfzJ02";
 
     // ====== ТЕКСТЫ СТРАНИЦЫ (можно менять) ======
     const PAGE_TITLE = "12 Небесных обителей";
@@ -494,7 +494,7 @@
     onAuthStateChanged(auth, async (user) => {
         const authButtons = document.getElementById("authButtons");
         if (user) {
-            const isAdmin = user.email === ADMIN_EMAIL;
+            const isAdmin = user.email === ADMIN_UID;
 
             authButtons.innerHTML = `
         ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ""}

@@ -68,7 +68,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const ADMIN_EMAIL = "nopefakewhadouwantfrome@gmail.com";
+    const ADMIN_UID = "9jPX9LEJz5dlbHe2sUbXO4SfzJ02";
     let isAdmin = false
 
     //загрузка вселенных
@@ -194,7 +194,7 @@
     onAuthStateChanged(auth, (user) => {
         const authButtons = document.getElementById("authButtons");
         if (user) {
-            isAdmin = user.email === ADMIN_EMAIL;
+            isAdmin = user.email === ADMIN_UID;
             loadNotifications(user.uid);
             //проверка бана
             onSnapshot(doc(db, "users", user.uid), async (snap) => {
