@@ -24,7 +24,7 @@
     <a href="index.html" class="logo">VL-EC-MQ</a>
     <nav class="nav">
       <div id="google_translate_element"></div>
-      <span class="nav-username" id="adminEmail"></span>
+      <span class="nav-username" id="adminUid"></span>
       <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
     </nav>
   </div>
@@ -316,7 +316,7 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const ADMIN_EMAIL = "nopefakewhadouwantfrome@gmail.com";
+  const ADMIN_UID = "nopefakewhadouwantfrome@gmail.com";
 
   //-цветные коды-
   function colorizeCode(code) {
@@ -335,11 +335,11 @@
   }
 
   onAuthStateChanged(auth, (user) => {
-    if (!user || user.email !== ADMIN_EMAIL) {
+    if (!user || user.uid !== ADMIN_UID) {
       window.location.href = "index.html";
       return;
     }
-    document.getElementById("adminEmail").textContent = user.email;
+    document.getElementById("adminUid").textContent = user.uid;
   });
 
   document.getElementById("logoutBtn").addEventListener("click", async () => {

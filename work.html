@@ -107,9 +107,10 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    await auth.authStateReady()
     const ADMIN_UID = "9jPX9LEJz5dlbHe2sUbXO4SfzJ02";
     function getIsAdmin() {
-        return auth.currentUser?.email === ADMIN_UID;
+        return auth.currentUser?.uid === ADMIN_UID;
     }
 
     let isAdmin = false;
@@ -198,7 +199,7 @@
         }
         //проверка админ акка
         const currentUser = auth.currentUser;
-        if (currentUser?.email === ADMIN_UID) {
+        if (currentUser?.uid === ADMIN_UID) {
             const addRootSection = document.createElement("button");
             addRootSection.className = "page-nav-btn add-section-btn";
             addRootSection.textContent = "+ Добавить раздел";
@@ -420,7 +421,7 @@
             sectionHeader.innerHTML = `
             <button class="sidebar-section-toggle">▶</button>
             <span class="sidebar-section-title">${section.title}</span>
-            ${auth.currentUser?.email === ADMIN_UID ? `
+            ${auth.currentUser?.uid === ADMIN_UID ? `
                 <button class="sidebar-section-add-page" data-section="${section.id}" title="Добавить страницу">+стр</button>
                 <button class="sidebar-section-add-sub" data-section="${section.id}" title="Добавить подраздел">+раздел</button>
                 <button class="sidebar-section-delete" data-section="${section.id}" title="Удалить раздел">✕</button>
@@ -452,7 +453,7 @@
                 sectionHeader.querySelector(".sidebar-section-toggle").textContent = isOpen ? "▶" : "▼";
             });
 
-            if (auth.currentUser?.email === ADMIN_UID) {
+            if (auth.currentUser?.uid === ADMIN_UID) {
                 sectionHeader.querySelector(".sidebar-section-add-page").addEventListener("click", () => {
                     sectionContent.style.display = "block";
                     sectionHeader.querySelector(".sidebar-section-toggle").textContent = "▼";
@@ -585,7 +586,7 @@
     ${page.cover ? `<img src="${page.cover}" class="page-cover-img">` : ""}
     <div class="page-header-row">
         <h1 class="page-title">${page.title}</h1>
-        ${auth.currentUser?.email === ADMIN_UID ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
+        ${auth.currentUser?.uid === ADMIN_UID ? `<button class="edit-inline-btn" id="editInlineBtn">Редактировать</button>` : ""}
         <button class="bookmark-btn" id="bookmarkBtn" data-page-id="${page.id}">🔖</button>
     </div>
     <div class="page-body" id="pageBody">${displayContent}</div>
@@ -599,7 +600,7 @@
         }
         </span>
     </div>
-    ${auth.currentUser?.email === ADMIN_UID ? `
+    ${auth.currentUser?.uid === ADMIN_UID ? `
         <div class="edit-toolbar" id="editToolbar" style="display:none">
             <div id="inlineEditor"></div>
             <div class="edit-actions">
