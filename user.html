@@ -99,7 +99,7 @@
   onAuthStateChanged(auth, async (user) => {
     const authButtons = document.getElementById("authButtons");
     if (user) {
-      const isAdmin = user.email === ADMIN_UID;
+      isAdmin = !!user && user.uid === ADMIN_UID;
       authButtons.innerHTML = `
                 ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ''}
                 <a href="profile.html" class="nav-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted)">Профиль</a>

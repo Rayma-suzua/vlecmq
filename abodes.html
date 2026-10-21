@@ -494,7 +494,7 @@
     onAuthStateChanged(auth, async (user) => {
         const authButtons = document.getElementById("authButtons");
         if (user) {
-            const isAdmin = user.email === ADMIN_UID;
+            isAdmin = !!user && user.uid === ADMIN_UID;
 
             authButtons.innerHTML = `
         ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ""}

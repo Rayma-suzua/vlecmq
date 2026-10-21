@@ -101,7 +101,7 @@
       return;
     }
 
-    const isAdmin = user.email === ADMIN_UID;
+    isAdmin = !!user && user.uid === ADMIN_UID;
     const authButtons = document.getElementById("authButtons");
     //проверка бана
     onSnapshot(doc(db, "users", user.uid), async (snap) => {

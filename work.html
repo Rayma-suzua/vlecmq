@@ -1243,7 +1243,7 @@
         const loginMsg = document.getElementById("commentLoginMsg");
 
         if (user) {
-            isAdmin = user.email === ADMIN_UID;
+            isAdmin = !!user && user.uid === ADMIN_UID;
             loadNotifications(user.uid);
             //проверка бана
             onSnapshot(doc(db, "users", user.uid), async (snap) => {

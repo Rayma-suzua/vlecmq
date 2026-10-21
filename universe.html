@@ -682,7 +682,7 @@
   onAuthStateChanged(auth, async (user) => {
     const authButtons = document.getElementById("authButtons");
     if (user) {
-      isAdmin = user.email === ADMIN_UID;
+      isAdmin = !!user && user.uid === ADMIN_UID;
       loadNotifications(user.uid);
       //проверка бана
       onSnapshot(doc(db, "users", user.uid), async (snap) => {
