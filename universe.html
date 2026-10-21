@@ -567,7 +567,7 @@
       _clickTimer = setTimeout(() => { _clickCount = 0; }, 500);
     }
   });
-
+  //блок секретной страницы
   function showSecretModal() {
     if (document.getElementById("secretModal")) return;
     const modal = document.createElement("div");
@@ -597,7 +597,7 @@
         document.getElementById("secretErr").textContent = "Неверный код";
         return;
       }
-      const snap = await getDoc(doc(db, "secret_pages", code));
+      const snap = await getDoc(doc(db, "secret_codes", code));
       if (!snap.exists()) {
         document.getElementById("secretErr").textContent = "Неверный код";
         return;
