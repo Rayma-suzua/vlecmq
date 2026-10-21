@@ -105,7 +105,8 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const ADMIN_UID = "nopefakewhadouwantfrome@gmail.com";
+    await auth.authStateReady();
+    const ADMIN_UID = "9jPX9LEJz5dlbHe2sUbXO4SfzJ02";
 
     let isAdmin = false;
     let replyingTo = null;
@@ -287,7 +288,7 @@
         }
         //проверка админ акка
         const currentUser = auth.currentUser;
-        if (currentUser?.uid === UID) {
+        if (currentUser?.uid === ADMIN_UID) {
             const addRootSection = document.createElement("button");
             addRootSection.className = "page-nav-btn add-section-btn";
             addRootSection.textContent = "+ Добавить раздел";
