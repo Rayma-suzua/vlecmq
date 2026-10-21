@@ -1055,12 +1055,17 @@
         document.getElementById("secretSubmit").addEventListener("click", async () => {
             const code = document.getElementById("secretInput").value.trim();
             if (!code) return;
-            const snap = await getDocs(query(collection(db, "secret_pages"), where("code", "==", code)));
-            if (snap.empty) {
+            // "/" нельзя в ID документа, "." и ".." тоже
+            if (code.includes("/") || code === "." || code === "..") {
                 document.getElementById("secretErr").textContent = "Неверный код";
                 return;
             }
-            window.location.href = `secret.html?code=${code}`;
+            const snap = await getDoc(doc(db, "secret_pages", code));
+            if (!snap.exists()) {
+                document.getElementById("secretErr").textContent = "Неверный код";
+                return;
+            }
+            window.location.href = `secret.html?code=${encodeURIComponent(code)}`;
         });
     }
 
@@ -1140,7 +1145,7 @@
                     ${isOwn ? `
                         <button class="comment-edit-btn" data-id="${c.id}" data-text="${c.text.replace(/"/g, '&quot;')}">✏️</button>
                         <button class="comment-delete-btn" data-id="${c.id}">✕</button>
-                    ` : auth.currentUser?.email === ADMIN_UID ? `
+                    ` : auth.currentUser?.uid === ADMIN_UID ? `
                         <button class="comment-delete-btn" data-id="${c.id}">✕</button>
                     ` : ""}
                 </div>
