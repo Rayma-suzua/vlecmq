@@ -619,7 +619,7 @@
 
         initBookmark(page.id, workId);
         //РЕДАКТОР АДМИНА
-        if (auth.currentUser?.email !== ADMIN_UID) return;
+        if (auth.currentUser?.uid !== ADMIN_UID) return;
 
         document.getElementById("editInlineBtn").addEventListener("click", () => {
             document.getElementById("pageBody").style.display = "none";
