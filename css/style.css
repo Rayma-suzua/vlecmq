@@ -3267,7 +3267,7 @@ html {
 .char-card-status[data-status="жив"] { color: #4caf50; font-weight: 600; }
 .char-card-status[data-status="жива"] { color: #4caf50; font-weight: 600; }
 .char-card-status[data-status="мёртв"] { color: #303030; font-weight: 600; }
-.char-card-status[data-status="мёртва"] { color: #303030; font-weight: 600; }
+.char-card-status[data-status="мертва"] { color: #303030; font-weight: 600; }
 .char-card-status[data-status="обездушен"] { color: #9e9e9e; font-weight: 600; }
 .char-card-status[data-status="неизвестно"] { color: var(--text-muted); font-weight: 600; }
 .char-card-status[data-status="исчез"] { color: #ff9800; font-weight: 600; }

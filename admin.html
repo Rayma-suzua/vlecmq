@@ -44,6 +44,7 @@
     <button class="sidebar-btn" id="btnPages">Страницы</button>
     <button class="sidebar-btn" id="btnCharacters">Персонажи</button>
     <button class="sidebar-btn" id="btnNewCharacter">+ Новый персонаж</button>
+    <button class="sidebar-btn" id="btnAbodes">Обители</button>
     <button class="sidebar-btn" id="btnSecrets">Секретные страницы</button>
     <button class="sidebar-btn" id="btnNewSecret">+ Новая секретная</button>
   </aside>
@@ -158,7 +159,6 @@
     <!-- ТЕРМИНЫ -->
     <div id="sectionGlossary" style="display:none">
       <h2 class="admin-section-title">Термины</h2>
-      <div id="glossaryListAdmin" class="admin-works-list" style="margin-bottom:32px"></div>
 
       <h3 class="admin-section-title" id="termFormTitle" style="font-size:18px">Новый термин</h3>
       <input type="hidden" id="termEditId">
@@ -171,6 +171,9 @@
         <button class="nav-btn logout-btn" id="cancelTermBtn" style="display:none">Отмена</button>
       </div>
       <p class="auth-error" id="termError"></p>
+
+      <h3 class="admin-section-title" style="font-size:18px;margin-top:32px">Все термины</h3>
+      <div id="glossaryListAdmin" class="admin-works-list" style="margin-bottom:32px"></div>
     </div>
 
     <!-- СПИСОК ПЕРСОНАЖЕЙ -->
@@ -183,7 +186,8 @@
 
     <!-- НОВЫЙ ПЕРСОНАЖ -->
     <div id="sectionNewCharacter" style="display:none">
-      <h2 class="admin-section-title">Новый персонаж</h2>
+      <h2 class="admin-section-title" id="charFormTitle">Новый персонаж</h2>
+      <input type="hidden" id="charEditId">
       <input type="text" id="charName" class="auth-input" placeholder="Имя персонажа">
       <input type="text" id="charCode" class="auth-input" placeholder="Код (необязательно">
       <input type="text" id="charRole" class="auth-input" placeholder="Роль / группа">
@@ -201,8 +205,68 @@
         </label>
         <img id="charPortraitPreview" class="cover-preview" style="display:none">
       </div>
-      <button class="auth-btn" id="saveCharacterBtn">Сохранить персонажа</button>
+      <div style="display:flex;gap:12px">
+        <button class="auth-btn" id="saveCharacterBtn">Сохранить персонажа</button>
+        <button class="nav-btn logout-btn" id="cancelCharBtn" style="display:none">Отмена</button>
+      </div>
       <p class="auth-error" id="characterError"></p>
+    </div>
+
+    <!-- ОБИТЕЛИ -->
+    <div id="sectionAbodes" style="display:none">
+      <h2 class="admin-section-title">Обители</h2>
+      <select id="abodeUniverse" class="auth-input admin-select">
+        <option value="">— Выбери вселенную —</option>
+      </select>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Порядок на круге меняется перетаскиванием (⠿). Кнопка «Состав» отмечает, какие персонажи входят в обитель.</p>
+      <div id="abodesListAdmin" class="admin-works-list" style="margin-bottom:16px"></div>
+      <p class="auth-error" id="abodeMembersMsg"></p>
+
+      <!-- СОСТАВ ОБИТЕЛИ -->
+      <div id="abodeMembersPanel" style="display:none;margin-bottom:32px;padding:16px;border:1px solid var(--border);border-radius:12px">
+        <h3 class="admin-section-title" id="abodeMembersTitle" style="font-size:18px"></h3>
+        <input type="text" id="abodeMembersSearch" class="auth-input" placeholder="Поиск персонажа...">
+        <div id="abodeMembersList" style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px" id="abodeMembersCount"></p>
+        <div style="display:flex;gap:12px">
+          <button class="auth-btn" id="saveAbodeMembersBtn">Сохранить состав</button>
+          <button class="nav-btn logout-btn" id="closeAbodeMembersBtn">Закрыть</button>
+        </div>
+      </div>
+
+      <!-- ФОРМА ОБИТЕЛИ -->
+      <h3 class="admin-section-title" id="abodeFormTitle" style="font-size:18px">Новая обитель</h3>
+      <input type="hidden" id="abodeEditId">
+      <input type="text" id="abodeName" class="auth-input" placeholder="Название обители">
+      <input type="text" id="abodeTag" class="auth-input" placeholder="Тег персонажей (если пусто — берётся название)">
+      <input type="text" id="abodeRuler" class="auth-input" placeholder="Правитель (необязательно)">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+        <input type="color" id="abodeColorPicker" value="#4a6cf7" style="width:48px;height:36px;padding:0;border:none;background:none;cursor:pointer">
+        <input type="text" id="abodeColor" class="auth-input" placeholder="Цвет узла на круге, например #4a6cf7 (необязательно)" style="margin-bottom:0;flex:1">
+      </div>
+      <textarea id="abodeDesc" class="auth-input admin-textarea" placeholder="Описание обители"></textarea>
+      <div class="upload-area">
+        <label class="upload-label">
+          Картинка обители
+          <input type="file" id="abodeImage" accept="image/*" style="display:none">
+          <span class="upload-btn">Выбрать файл</span>
+        </label>
+        <img id="abodeImagePreview" class="cover-preview" style="display:none">
+      </div>
+      <div class="upload-area">
+        <label class="upload-label">
+          Своя миниатюра для круга (необязательно)
+          <input type="file" id="abodeThumb" accept="image/*" style="display:none">
+          <span class="upload-btn">Выбрать файл</span>
+        </label>
+        <img id="abodeThumbPreview" class="cover-preview" style="display:none">
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Если миниатюру не загружать, она сделается из основной картинки сама.</p>
+      <div style="display:flex;gap:12px">
+        <button class="auth-btn" id="saveAbodeBtn">Сохранить обитель</button>
+        <button class="nav-btn logout-btn" id="cancelAbodeBtn" style="display:none">Отмена</button>
+      </div>
+      <p class="auth-error" id="abodeError"></p>
     </div>
 
     <!-- СПИСОК СЕКРЕТНЫХ -->
@@ -586,9 +650,13 @@
                     <div class="admin-work-name">${char.name} ${char.code ? `<span style="font-size:12px">${colorizeCode(char.code)}</span>` : ""}</div>
                     <div class="admin-work-desc">${char.role || "—"}</div>
                 </div>
+                <button class="edit-char-btn nav-btn" data-id="${char.id}" style="margin-right:8px">Редактировать</button>
                 <button class="delete-btn delete-char-btn" data-id="${char.id}">Удалить</button>
             </div>
         `;
+    });
+    document.querySelectorAll(".edit-char-btn").forEach(btn => {
+      btn.addEventListener("click", () => openEditCharacter(btn.getAttribute("data-id")));
     });
     document.querySelectorAll(".delete-char-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
@@ -598,6 +666,41 @@
         document.getElementById(`char-${id}`).remove();
       });
     });
+  }
+
+  function resetCharacterForm() {
+    ["charEditId", "charName", "charCode", "charRole", "charDesc", "charTags", "charUniverse", "charPortrait"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
+    document.getElementById("charPortraitPreview").style.display = "none";
+    document.getElementById("charFormTitle").textContent = "Новый персонаж";
+    document.getElementById("saveCharacterBtn").textContent = "Сохранить персонажа";
+    document.getElementById("cancelCharBtn").style.display = "none";
+    document.getElementById("characterError").textContent = "";
+  }
+
+  async function openEditCharacter(charId) {
+    const charDoc = await getDoc(doc(db, "characters", charId));
+    if (!charDoc.exists()) return;
+    const c = charDoc.data();
+    Object.values(sections).forEach(s => document.getElementById(s).style.display = "none");
+    document.querySelectorAll(".sidebar-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById("sectionNewCharacter").style.display = "block";
+    await loadCharactersUniverseSelect();
+    resetCharacterForm();
+    document.getElementById("charEditId").value = charId;
+    document.getElementById("charName").value = c.name || "";
+    document.getElementById("charCode").value = c.code || "";
+    document.getElementById("charRole").value = c.role || "";
+    document.getElementById("charTags").value = (c.tags || []).join(", ");
+    document.getElementById("charDesc").value = c.description || "";
+    document.getElementById("charUniverse").value = c.universeId || "";
+    const preview = document.getElementById("charPortraitPreview");
+    if (c.portrait) { preview.src = c.portrait; preview.style.display = "block"; }
+    document.getElementById("charFormTitle").textContent = "Редактировать персонажа";
+    document.getElementById("saveCharacterBtn").textContent = "Обновить персонажа";
+    document.getElementById("cancelCharBtn").style.display = "inline-block";
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function loadGlossaryAdmin() {
@@ -660,6 +763,7 @@
     btnPages: "sectionPages",
     btnCharacters: "sectionCharacters",
     btnNewCharacter: "sectionNewCharacter",
+    btnAbodes: "sectionAbodes",
     btnGlossary: "sectionGlossary",
     btnSecrets: "sectionSecrets",
     btnNewSecret: "sectionNewSecret",
@@ -678,7 +782,8 @@
       if (btnId === "btnPages") loadAdminPagesList();
       if (btnId === "btnGlossary") loadGlossaryAdmin();
       if (btnId === "btnCharacters") loadCharactersList();
-      if (btnId === "btnNewCharacter") loadCharactersUniverseSelect();
+      if (btnId === "btnNewCharacter") { resetCharacterForm(); loadCharactersUniverseSelect(); }
+      if (btnId === "btnAbodes") initAbodesAdmin();
       if (btnId === "btnSecrets") loadSecretsList();
     });
   });
@@ -904,6 +1009,11 @@
   });
 
   //---СОХРАНЕНИЕ ПЕРСОНАЖА---
+  document.getElementById("cancelCharBtn").addEventListener("click", () => {
+    resetCharacterForm();
+    document.getElementById("btnCharacters").click();
+  });
+
   document.getElementById("saveCharacterBtn").addEventListener("click", async () => {
     const charName = document.getElementById("charName").value.trim();
     const charCode = document.getElementById("charCode").value.trim();
@@ -915,6 +1025,7 @@
     const universeId = document.getElementById("charUniverse").value;
     const portraitFile = document.getElementById("charPortrait").files[0];
     const errorEl = document.getElementById("characterError");
+    const editId = document.getElementById("charEditId").value;
     if (!charName) { errorEl.textContent = "Введи имя"; return; }
     if (!universeId) { errorEl.textContent = "Выбери вселенную"; return; }
     try {
@@ -922,6 +1033,20 @@
       errorEl.textContent = "Сохраняем...";
       let portraitUrl = "";
       if (portraitFile) portraitUrl = await uploadFile(portraitFile);
+
+      if (editId) {
+        // портрет меняется, только если выбран новый файл
+        const updateData = {
+          name: charName, code: charCode, role: charRole, description: charDesc,
+          universeId, tags
+        };
+        if (portraitUrl) updateData.portrait = portraitUrl;
+        await updateDoc(doc(db, "characters", editId), updateData);
+        resetCharacterForm();
+        // после сохранения возвращаемся к списку персонажей
+        document.getElementById("btnCharacters").click();
+        return;
+      }
 
       await addDoc(collection(db, "characters"), {
         name: charName, code: charCode, role: charRole, description: charDesc,
@@ -985,6 +1110,364 @@
       errorEl.textContent = e.message;
     }
   });
+  //---ОБИТЕЛИ---
+  const THUMB_T = "w_200,h_200,c_fill,g_auto";
+  const makeThumb = (url) => (url && url.includes("/upload/")) ? url.replace("/upload/", `/upload/${THUMB_T}/`) : url;
+  const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  const normTag = (s) => String(s ?? "").trim().toLowerCase();
+  const abodeTagOf = (a) => String(a.tag || a.name || "").trim();
+
+  let abodesCache = [];
+  let membersAbode = null;
+  let membersChars = [];
+  let membersChecked = new Set();
+
+  async function initAbodesAdmin() {
+    const select = document.getElementById("abodeUniverse");
+    const prev = select.value;
+    select.innerHTML = `<option value="">— Выбери вселенную —</option>`;
+    const snapshot = await getDocs(query(collection(db, "universes"), orderBy("order")));
+    snapshot.forEach(d => {
+      select.innerHTML += `<option value="${d.id}">${escHtml(d.data().title)}</option>`;
+    });
+    const ids = snapshot.docs.map(d => d.id);
+    select.value = ids.includes(prev) ? prev : (ids[0] || "");
+    resetAbodeForm();
+    closeAbodeMembers();
+    document.getElementById("abodeMembersMsg").textContent = "";
+    await loadAbodesAdmin();
+  }
+
+  function resetAbodeForm() {
+    ["abodeEditId", "abodeName", "abodeTag", "abodeRuler", "abodeColor", "abodeDesc"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
+    document.getElementById("abodeColorPicker").value = "#4a6cf7";
+    document.getElementById("abodeImage").value = "";
+    document.getElementById("abodeThumb").value = "";
+    document.getElementById("abodeImagePreview").style.display = "none";
+    document.getElementById("abodeThumbPreview").style.display = "none";
+    document.getElementById("abodeFormTitle").textContent = "Новая обитель";
+    document.getElementById("saveAbodeBtn").textContent = "Сохранить обитель";
+    document.getElementById("cancelAbodeBtn").style.display = "none";
+    document.getElementById("abodeError").textContent = "";
+  }
+
+  async function loadAbodesAdmin() {
+    const list = document.getElementById("abodesListAdmin");
+    const universeId = document.getElementById("abodeUniverse").value;
+    if (!universeId) {
+      abodesCache = [];
+      list.innerHTML = `<p class="loading-text">Выбери вселенную</p>`;
+      return;
+    }
+    list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
+
+    const [abodesSnap, charsSnap] = await Promise.all([
+      getDocs(query(collection(db, "abodes"), where("universeId", "==", universeId))),
+      getDocs(query(collection(db, "characters"), where("universeId", "==", universeId)))
+    ]);
+    const chars = [];
+    charsSnap.forEach(d => chars.push({ id: d.id, ...d.data() }));
+    abodesCache = [];
+    abodesSnap.forEach(d => abodesCache.push({ id: d.id, ...d.data() }));
+    abodesCache.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    if (abodesCache.length === 0) {
+      list.innerHTML = `<p class="loading-text">Обителей пока нет</p>`;
+      return;
+    }
+
+    list.innerHTML = "";
+    abodesCache.forEach((a, i) => {
+      const tag = abodeTagOf(a);
+      const members = chars.filter(c => (c.tags || []).some(t => normTag(t) === normTag(tag))).map(c => c.name);
+      const thumb = a.thumb || a.image;
+      const names = members.length
+              ? " — " + escHtml(members.slice(0, 6).join(", ")) + (members.length > 6 ? "…" : "")
+              : "";
+      list.innerHTML += `
+            <div class="admin-work-item draggable" id="abode-${a.id}" data-id="${a.id}" draggable="true">
+                <div class="drag-handle">⠿</div>
+                ${thumb ? `<img src="${escHtml(thumb)}" class="admin-work-thumb" style="border-radius:50%">` : '<div class="admin-work-thumb-empty"></div>'}
+                <div style="flex:1">
+                    <div class="admin-work-name">${i + 1}. ${escHtml(a.name)}</div>
+                    <div class="admin-work-desc">Тег: «${escHtml(tag)}» · персонажей: ${members.length}${names}</div>
+                </div>
+                <button class="nav-btn members-abode-btn" data-id="${a.id}" style="margin-right:8px">Состав</button>
+                <button class="nav-btn edit-abode-btn" data-id="${a.id}" style="margin-right:8px">Редактировать</button>
+                <button class="delete-btn delete-abode-btn" data-id="${a.id}">Удалить</button>
+            </div>
+        `;
+    });
+
+    list.querySelectorAll(".members-abode-btn").forEach(btn => {
+      btn.addEventListener("click", () => openAbodeMembers(btn.dataset.id));
+    });
+    list.querySelectorAll(".edit-abode-btn").forEach(btn => {
+      btn.addEventListener("click", () => editAbode(btn.dataset.id));
+    });
+    list.querySelectorAll(".delete-abode-btn").forEach(btn => {
+      btn.addEventListener("click", () => deleteAbode(btn.dataset.id));
+    });
+
+    // порядок обителей перетаскиванием
+    let dragEl = null;
+    list.querySelectorAll(".draggable").forEach(item => {
+      item.addEventListener("dragstart", () => {
+        dragEl = item;
+        setTimeout(() => item.classList.add("dragging"), 0);
+      });
+      item.addEventListener("dragend", async () => {
+        item.classList.remove("dragging");
+        const items = list.querySelectorAll(".draggable");
+        const updates = [];
+        items.forEach((el, index) => updates.push(updateDoc(doc(db, "abodes", el.dataset.id), { order: index + 1 })));
+        await Promise.all(updates);
+        await loadAbodesAdmin();
+      });
+      item.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (item === dragEl) return;
+        const rect = item.getBoundingClientRect();
+        if (e.clientY < rect.top + rect.height / 2) list.insertBefore(dragEl, item);
+        else list.insertBefore(dragEl, item.nextSibling);
+      });
+    });
+  }
+
+  function editAbode(id) {
+    const a = abodesCache.find(x => x.id === id);
+    if (!a) return;
+    document.getElementById("abodeEditId").value = id;
+    document.getElementById("abodeName").value = a.name || "";
+    document.getElementById("abodeTag").value = a.tag || "";
+    document.getElementById("abodeRuler").value = a.ruler || "";
+    document.getElementById("abodeColor").value = a.color || "";
+    if (/^#[0-9a-f]{6}$/i.test(a.color || "")) document.getElementById("abodeColorPicker").value = a.color;
+    document.getElementById("abodeDesc").value = a.description || "";
+    document.getElementById("abodeImage").value = "";
+    document.getElementById("abodeThumb").value = "";
+
+    const imgPrev = document.getElementById("abodeImagePreview");
+    if (a.image) { imgPrev.src = a.image; imgPrev.style.display = "block"; }
+    else imgPrev.style.display = "none";
+    const thumbPrev = document.getElementById("abodeThumbPreview");
+    if (a.thumb) { thumbPrev.src = a.thumb; thumbPrev.style.display = "block"; }
+    else thumbPrev.style.display = "none";
+
+    document.getElementById("abodeFormTitle").textContent = "Редактировать обитель";
+    document.getElementById("saveAbodeBtn").textContent = "Обновить обитель";
+    document.getElementById("cancelAbodeBtn").style.display = "inline-block";
+    document.getElementById("abodeError").textContent = "";
+    document.getElementById("abodeName").scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function deleteAbode(id) {
+    const a = abodesCache.find(x => x.id === id);
+    if (!confirm(`Удалить обитель «${a ? a.name : ""}»? Теги у персонажей останутся.`)) return;
+    await deleteDoc(doc(db, "abodes", id));
+    // оставшиеся обители нумеруем заново без дырок
+    const rest = abodesCache.filter(x => x.id !== id);
+    await Promise.all(rest.map((x, i) => updateDoc(doc(db, "abodes", x.id), { order: i + 1 })));
+    if (document.getElementById("abodeEditId").value === id) resetAbodeForm();
+    closeAbodeMembers();
+    await loadAbodesAdmin();
+  }
+
+  // ---- состав обители (галочки персонажей) ----
+  function closeAbodeMembers() {
+    document.getElementById("abodeMembersPanel").style.display = "none";
+    membersAbode = null;
+  }
+
+  function renderAbodeMembers() {
+    const q = document.getElementById("abodeMembersSearch").value.trim().toLowerCase();
+    const box = document.getElementById("abodeMembersList");
+    const shown = membersChars.filter(c => !q || (c.name || "").toLowerCase().includes(q));
+    box.innerHTML = shown.length === 0
+            ? `<p class="loading-text">Никого не найдено</p>`
+            : shown.map(c => `
+                <label class="page-option-label">
+                    <input type="checkbox" data-id="${c.id}" ${membersChecked.has(c.id) ? "checked" : ""}>
+                    ${escHtml(c.name)}${c.role ? ` <span style="color:var(--text-muted);font-size:12px">· ${escHtml(c.role)}</span>` : ""}
+                </label>
+            `).join("");
+    box.querySelectorAll("input[type=checkbox]").forEach(cb => {
+      cb.addEventListener("change", () => {
+        if (cb.checked) membersChecked.add(cb.dataset.id);
+        else membersChecked.delete(cb.dataset.id);
+        document.getElementById("abodeMembersCount").textContent = `Выбрано: ${membersChecked.size} из ${membersChars.length}`;
+      });
+    });
+    document.getElementById("abodeMembersCount").textContent = `Выбрано: ${membersChecked.size} из ${membersChars.length}`;
+  }
+
+  async function openAbodeMembers(id) {
+    const a = abodesCache.find(x => x.id === id);
+    if (!a) return;
+    const msg = document.getElementById("abodeMembersMsg");
+    msg.textContent = "";
+    const tag = abodeTagOf(a);
+    if (!tag) {
+      msg.style.color = "var(--error)";
+      msg.textContent = "У обители нет ни названия, ни тега";
+      return;
+    }
+    const universeId = document.getElementById("abodeUniverse").value;
+    const snap = await getDocs(query(collection(db, "characters"), where("universeId", "==", universeId)));
+    membersChars = [];
+    snap.forEach(d => membersChars.push({ id: d.id, ...d.data() }));
+    membersChars.sort((x, y) => (x.name || "").localeCompare(y.name || "", "ru"));
+    membersChecked = new Set(
+            membersChars.filter(c => (c.tags || []).some(t => normTag(t) === normTag(tag))).map(c => c.id)
+    );
+    membersAbode = { id: a.id, name: a.name || "", tag };
+
+    document.getElementById("abodeMembersTitle").textContent = `Состав: ${a.name || tag} (тег «${tag}»)`;
+    document.getElementById("abodeMembersSearch").value = "";
+    renderAbodeMembers();
+    const panel = document.getElementById("abodeMembersPanel");
+    panel.style.display = "block";
+    panel.scrollIntoView({ behavior: "smooth" });
+  }
+
+  document.getElementById("abodeMembersSearch").addEventListener("input", renderAbodeMembers);
+  document.getElementById("closeAbodeMembersBtn").addEventListener("click", closeAbodeMembers);
+
+  document.getElementById("saveAbodeMembersBtn").addEventListener("click", async () => {
+    if (!membersAbode) return;
+    const msg = document.getElementById("abodeMembersMsg");
+    const key = normTag(membersAbode.tag);
+    try {
+      const updates = [];
+      membersChars.forEach(c => {
+        const tags = c.tags || [];
+        const has = tags.some(t => normTag(t) === key);
+        const want = membersChecked.has(c.id);
+        if (want && !has) {
+          updates.push(updateDoc(doc(db, "characters", c.id), { tags: [...tags, membersAbode.tag] }));
+        }
+        if (!want && has) {
+          updates.push(updateDoc(doc(db, "characters", c.id), { tags: tags.filter(t => normTag(t) !== key) }));
+        }
+      });
+      await Promise.all(updates);
+      const changed = updates.length;
+      const name = membersAbode.name;
+      closeAbodeMembers();
+      await loadAbodesAdmin();
+      msg.style.color = "#4caf50";
+      msg.textContent = changed
+              ? `Состав «${name}» сохранён (изменено персонажей: ${changed})`
+              : "Изменений нет";
+    } catch (e) {
+      msg.style.color = "var(--error)";
+      msg.textContent = e.message;
+    }
+  });
+
+  // ---- форма обители ----
+  document.getElementById("abodeUniverse").addEventListener("change", async () => {
+    resetAbodeForm();
+    closeAbodeMembers();
+    document.getElementById("abodeMembersMsg").textContent = "";
+    await loadAbodesAdmin();
+  });
+
+  document.getElementById("cancelAbodeBtn").addEventListener("click", resetAbodeForm);
+
+  [["abodeImage", "abodeImagePreview"], ["abodeThumb", "abodeThumbPreview"]].forEach(([inputId, previewId]) => {
+    document.getElementById(inputId).addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const preview = document.getElementById(previewId);
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+      }
+    });
+  });
+
+  document.getElementById("abodeColorPicker").addEventListener("input", (e) => {
+    document.getElementById("abodeColor").value = e.target.value;
+  });
+  document.getElementById("abodeColor").addEventListener("input", (e) => {
+    const v = e.target.value.trim();
+    if (/^#[0-9a-f]{6}$/i.test(v)) document.getElementById("abodeColorPicker").value = v;
+  });
+
+  async function uploadAbodeImage(file) {
+    const url = await uploadFile(file);
+    if (!url) throw new Error("Не удалось загрузить картинку");
+    return url;
+  }
+
+  document.getElementById("saveAbodeBtn").addEventListener("click", async () => {
+    const errorEl = document.getElementById("abodeError");
+    const universeId = document.getElementById("abodeUniverse").value;
+    const editId = document.getElementById("abodeEditId").value;
+    const name = document.getElementById("abodeName").value.trim();
+    const tag = document.getElementById("abodeTag").value.trim();
+    const ruler = document.getElementById("abodeRuler").value.trim();
+    const color = document.getElementById("abodeColor").value.trim();
+    const description = document.getElementById("abodeDesc").value.trim();
+    const imageFile = document.getElementById("abodeImage").files[0];
+    const thumbFile = document.getElementById("abodeThumb").files[0];
+
+    errorEl.style.color = "var(--error)";
+    if (!universeId) { errorEl.textContent = "Выбери вселенную"; return; }
+    if (!name) { errorEl.textContent = "Введи название обители"; return; }
+    if (color && !/^#[0-9a-f]{3,8}$/i.test(color)) { errorEl.textContent = "Цвет нужен в формате #4a6cf7"; return; }
+
+    try {
+      errorEl.style.color = "var(--text-muted)";
+      errorEl.textContent = "Сохраняем...";
+      const existing = editId ? abodesCache.find(a => a.id === editId) : null;
+
+      let image = existing?.image || "";
+      let thumb = existing?.thumb || "";
+      if (imageFile) {
+        image = await uploadAbodeImage(imageFile);
+        const hadCustomThumb = thumb && !thumb.includes(THUMB_T);
+        if (!hadCustomThumb) thumb = makeThumb(image);
+      }
+      if (thumbFile) thumb = await uploadAbodeImage(thumbFile);
+
+      const data = { universeId, name, tag, ruler, color, description, image, thumb };
+
+      if (existing) {
+        // если тег изменился, предложить обновить его у персонажей
+        const oldTag = abodeTagOf(existing);
+        const newTag = (tag || name).trim();
+        if (oldTag && normTag(oldTag) !== normTag(newTag)) {
+          const charsSnap = await getDocs(query(collection(db, "characters"), where("universeId", "==", universeId)));
+          const affected = [];
+          charsSnap.forEach(d => {
+            const t = d.data().tags || [];
+            if (t.some(x => normTag(x) === normTag(oldTag))) affected.push({ id: d.id, tags: t });
+          });
+          if (affected.length && confirm(`Тег обители изменился: «${oldTag}» → «${newTag}». Заменить его у персонажей (${affected.length})?`)) {
+            await Promise.all(affected.map(c => updateDoc(doc(db, "characters", c.id), {
+              tags: [...new Set(c.tags.map(x => normTag(x) === normTag(oldTag) ? newTag : x))]
+            })));
+          }
+        }
+        await updateDoc(doc(db, "abodes", editId), data);
+      } else {
+        const maxOrder = abodesCache.reduce((m, a) => Math.max(m, a.order || 0), 0);
+        await addDoc(collection(db, "abodes"), { ...data, order: maxOrder + 1, createdAt: serverTimestamp() });
+      }
+
+      resetAbodeForm();
+      await loadAbodesAdmin();
+      errorEl.style.color = "#4caf50";
+      errorEl.textContent = existing ? "Обитель обновлена!" : "Обитель сохранена!";
+    } catch (e) {
+      errorEl.style.color = "var(--error)";
+      errorEl.textContent = e.message;
+    }
+  });
+
   //---СЕКРЕТНЫЕ СТРАНИЦЫ---
   async function loadSecretsList() {
     const list = document.getElementById("secretsList");
@@ -1036,14 +1519,14 @@
     });
   }
 
-    document.querySelectorAll(".delete-secret-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-id");
-        if (!confirm("Удалить секретную страницу?")) return;
-        await deleteDoc(doc(db, "secret_pages", id));
-        document.getElementById(`secret-${id}`).remove();
-      });
+  document.querySelectorAll(".delete-secret-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-id");
+      if (!confirm("Удалить секретную страницу?")) return;
+      await deleteDoc(doc(db, "secret_pages", id));
+      document.getElementById(`secret-${id}`).remove();
     });
+  });
   //-сохранить секретную страницу-
   document.getElementById("saveSecretBtn").addEventListener("click", async () => {
     const title = document.getElementById("secretTitle").value.trim();

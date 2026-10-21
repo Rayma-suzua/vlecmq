@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обители</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'ru',
+                includedLanguages: 'en,de,fr,ja,ko,zh-CN,uk,pl',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <style>
+        /* ===== Страница обителей ===== */
+        .abodes-page { max-width: 1200px; margin: 0 auto; padding: 32px 24px 72px; }
+
+        .abodes-top { text-align: center; margin-bottom: 36px; }
+        .abodes-top .back-link { display: inline-block; margin-bottom: 18px; }
+        .abodes-title { font-family: 'Lora', serif; font-size: 2.3rem; margin: 0 0 8px; }
+        .abodes-subtitle { color: var(--text-muted); margin: 0; }
+
+        .abodes-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+            gap: 40px;
+            align-items: start;
+        }
+
+        /* --- круг --- */
+        .abodes-ring { width: 100%; height: auto; display: block; }
+        .ring-orbit { fill: none; stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 6; }
+        .ring-spoke { stroke: var(--border); stroke-width: 1; }
+        .ring-center { fill: var(--bg-input, #1a1a2e); stroke: var(--border); stroke-width: 1; }
+        .ring-center-text { fill: var(--text, #e6e6f0); font-family: 'Lora', serif; font-weight: 600; text-anchor: middle; }
+
+        .ring-node {
+            cursor: pointer;
+            outline: none;
+            transition: transform .2s ease;
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+        .ring-node:hover, .ring-node:focus-visible { transform: scale(1.1); }
+        .ring-circle {
+            fill: var(--bg-input, #1a1a2e);
+            stroke: var(--node-color, var(--border));
+            stroke-width: 2;
+            transition: stroke .2s ease, stroke-width .2s ease;
+        }
+        .ring-node.active .ring-circle { stroke: var(--node-color, var(--accent, #4a6cf7)); stroke-width: 4; }
+        .ring-num { fill: var(--text, #e6e6f0); font-size: 20px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+        .ring-badge { fill: var(--bg-input, #1a1a2e); stroke: var(--border); stroke-width: 1; pointer-events: none; }
+        .ring-badge-num { fill: var(--text, #e6e6f0); font-size: 11px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+        .ring-node.active .ring-badge { fill: var(--node-color, var(--accent, #4a6cf7)); stroke: none; }
+        .ring-node.active .ring-badge-num { fill: #fff; }
+
+        /* --- сетка для телефонов (вместо круга) --- */
+        .abodes-grid { display: none; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .abode-chip {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            padding: 10px 6px; border-radius: 12px; cursor: pointer;
+            background: var(--bg-input, #1a1a2e); border: 1px solid var(--border);
+            color: var(--text, #e6e6f0); font: inherit; font-size: 12px; text-align: center;
+            transition: border-color .2s ease;
+        }
+        .abode-chip img, .abode-chip-num {
+            width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--border); font-size: 18px; font-weight: 700;
+        }
+        .abode-chip.active { border-color: var(--node-color, var(--accent, #4a6cf7)); }
+        .abode-chip.active img, .abode-chip.active .abode-chip-num { border-color: var(--node-color, var(--accent, #4a6cf7)); }
+        .abode-chip-name { line-height: 1.25; }
+
+        /* --- карточка обители --- */
+        .abode-card {
+            border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+            background: var(--bg-card, rgba(255,255,255,0.03));
+        }
+        .abode-card.swap { animation: abodeFade .35s ease; }
+        @keyframes abodeFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+        .abode-img-wrap { aspect-ratio: 16 / 9; background: var(--bg-input, #1a1a2e); overflow: hidden; }
+        .abode-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .abode-img-empty {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            font-family: 'Lora', serif; font-size: 4rem; color: var(--text-muted);
+        }
+
+        .abode-body { padding: 22px 26px 28px; }
+        .abode-label {
+            font-size: 11px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px;
+            color: var(--abode-color, var(--accent, #4a6cf7));
+        }
+        .abode-name { font-family: 'Lora', serif; font-size: 1.7rem; margin: 0 0 6px; }
+        .abode-ruler { color: var(--text-muted); font-size: 14px; margin: 0 0 14px; }
+        .abode-desc { white-space: pre-line; line-height: 1.7; margin: 0 0 24px; }
+
+        .abode-chars-title {
+            font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
+            border-top: 1px solid var(--border); padding-top: 18px; margin-bottom: 14px;
+        }
+        .abode-chars { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+        .abode-char {
+            display: block; text-decoration: none; color: inherit;
+            border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+            background: var(--bg-input, #1a1a2e); transition: transform .2s ease, border-color .2s ease;
+        }
+        .abode-char:hover { transform: translateY(-3px); border-color: var(--border-strong, var(--text-muted)); }
+        .abode-char-img { aspect-ratio: 3 / 4; background: rgba(255,255,255,0.04); overflow: hidden; }
+        .abode-char-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+        .abode-char-info { padding: 8px 10px 10px; }
+        .abode-char-name { font-size: 13px; font-weight: 700; line-height: 1.25; }
+        .abode-char-role { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+        @media (max-width: 1000px) {
+            .abodes-layout { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+            .abodes-ring { max-width: 520px; margin: 0 auto; }
+        }
+        @media (max-width: 700px) {
+            .abodes-page { padding: 24px 16px 56px; }
+            .abodes-title { font-size: 1.8rem; }
+            .abodes-ring { display: none; }
+            .abodes-grid { display: grid; }
+            .abode-body { padding: 18px 18px 22px; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="index.html" class="logo">VL-EC-MQ</a>
+        <nav class="nav">
+            <div id="google_translate_element"></div>
+            <a href="glossary.html" class="nav-link">Глоссарий</a>
+            <div id="authButtons"></div>
+        </nav>
+    </div>
+</header>
+
+<main class="abodes-page">
+    <div class="abodes-top">
+        <a href="index.html" class="back-link" id="backLink">← Вселенная</a>
+        <h1 class="abodes-title" id="pageTitle"></h1>
+        <p class="abodes-subtitle" id="pageSubtitle"></p>
+    </div>
+
+    <p class="loading-text" id="abodesStatus" style="text-align:center">Загрузка...</p>
+
+    <div class="abodes-layout" id="abodesLayout" style="display:none">
+        <div class="abodes-nav">
+            <svg id="ring" class="abodes-ring" viewBox="0 0 560 560" role="group" aria-label="Круг небесных обителей"></svg>
+            <div class="abodes-grid" id="abodesGrid"></div>
+        </div>
+
+        <article class="abode-card" id="abodeCard">
+            <div class="abode-img-wrap" id="abodeImg"></div>
+            <div class="abode-body">
+                <div class="abode-label" id="abodeLabel"></div>
+                <h2 class="abode-name" id="abodeName"></h2>
+                <p class="abode-ruler" id="abodeRuler"></p>
+                <p class="abode-desc" id="abodeDesc"></p>
+                <div class="abode-chars-title" id="abodeCharsTitle">Персонажи обители</div>
+                <div class="abode-chars" id="abodeChars"></div>
+            </div>
+        </article>
+    </div>
+</main>
+
+<footer class="footer">
+    © 2026 Rayma Suzua/Rintarocan (Рэйма Сузуя/Ринтаросан). Все персонажи, миры, текстовые материалы и произведения являются интеллектуальной собственностью автора.<br>
+    Любое копирование или использование без разрешения запрещено.
+</footer>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
+        authDomain: "vlecmq.firebaseapp.com",
+        projectId: "vlecmq",
+        storageBucket: "vlecmq.firebasestorage.app",
+        messagingSenderId: "730050177884",
+        appId: "1:730050177884:web:d4c7c17614b6aa51c96f99"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const ADMIN_EMAIL = "nopaknopanopefake@gmail.com";
+
+    // ====== ТЕКСТЫ СТРАНИЦЫ (можно менять) ======
+    const PAGE_TITLE = "12 Небесных обителей";
+    const PAGE_SUBTITLE = "Обители Верховных драконов";
+    const RULER_LABEL = "Правитель";
+    // ============================================
+
+    const params = new URLSearchParams(window.location.search);
+    const universeId = params.get("id");
+    if (!universeId) { window.location.href = "index.html"; }
+
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+    ));
+    const norm = (s) => String(s ?? "").trim().toLowerCase();
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    function svgEl(tag, attrs = {}) {
+        const el = document.createElementNS(SVG_NS, tag);
+        for (const k in attrs) el.setAttribute(k, attrs[k]);
+        return el;
+    }
+
+    document.getElementById("pageTitle").textContent = PAGE_TITLE;
+    document.getElementById("pageSubtitle").textContent = PAGE_SUBTITLE;
+
+    async function init() {
+        const status = document.getElementById("abodesStatus");
+
+        // вселенная
+        const universeDoc = await getDoc(doc(db, "universes", universeId));
+        if (!universeDoc.exists()) { window.location.href = "index.html"; return; }
+        const universe = universeDoc.data();
+
+        document.title = `Обители · ${universe.title}`;
+        const backLink = document.getElementById("backLink");
+        backLink.href = `universe.html?id=${universeId}`;
+        backLink.textContent = `← ${universe.title}`;
+
+        // обители
+        const abodesSnap = await getDocs(query(collection(db, "abodes"), where("universeId", "==", universeId)));
+        const abodes = [];
+        abodesSnap.forEach((d) => abodes.push({ id: d.id, ...d.data() }));
+        abodes.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        if (abodes.length === 0) {
+            status.textContent = "Обители скоро появятся...";
+            return;
+        }
+
+        // персонажи вселенной
+        const charsSnap = await getDocs(query(collection(db, "characters"), where("universeId", "==", universeId)));
+        const chars = [];
+        charsSnap.forEach((d) => chars.push({ id: d.id, ...d.data() }));
+        chars.sort((a, b) => (a.name || "").localeCompare(b.name || "", "ru"));
+
+        const numOf = (a, i) => a.order || (i + 1);
+        const membersOf = (a) => {
+            const tag = norm(a.tag || a.name);
+            return chars.filter((c) => (c.tags || []).some((t) => norm(t) === tag));
+        };
+
+        status.style.display = "none";
+        document.getElementById("abodesLayout").style.display = "grid";
+
+        // ---------- круг ----------
+        const ring = document.getElementById("ring");
+        const grid = document.getElementById("abodesGrid");
+        const CX = 280, CY = 280, R = 210, NODE_R = 38, CENTER_R = 78;
+        const N = abodes.length;
+
+        ring.appendChild(svgEl("circle", { class: "ring-orbit", cx: CX, cy: CY, r: R }));
+
+        const defs = svgEl("defs");
+        ring.appendChild(defs);
+        const spokes = svgEl("g");
+        ring.appendChild(spokes);
+
+        ring.appendChild(svgEl("circle", { class: "ring-center", cx: CX, cy: CY, r: CENTER_R }));
+        const title = universe.title || "";
+        const centerText = svgEl("text", {
+            class: "ring-center-text", x: CX, y: CY + (title.length > 8 ? 6 : 9),
+            "font-size": title.length > 8 ? 18 : 26
+        });
+        centerText.textContent = title;
+        ring.appendChild(centerText);
+
+        const nodes = [];
+        const chips = [];
+
+        abodes.forEach((a, i) => {
+            const num = numOf(a, i);
+            const thumb = a.thumb || a.image || "";
+            const ang = (-90 + (360 / N) * i) * Math.PI / 180;
+            const x = CX + R * Math.cos(ang);
+            const y = CY + R * Math.sin(ang);
+
+            //спица от центра к узлу
+            spokes.appendChild(svgEl("line", {
+                class: "ring-spoke",
+                x1: CX + CENTER_R * Math.cos(ang), y1: CY + CENTER_R * Math.sin(ang),
+                x2: x - NODE_R * Math.cos(ang), y2: y - NODE_R * Math.sin(ang)
+            }));
+
+            const g = svgEl("g", { class: "ring-node", tabindex: "0", role: "button", "aria-label": a.name || `Обитель ${num}` });
+            if (a.color) g.style.setProperty("--node-color", a.color);
+
+            const tip = svgEl("title");
+            tip.textContent = a.name || `Обитель ${num}`;
+            g.appendChild(tip);
+
+            g.appendChild(svgEl("circle", { class: "ring-circle", cx: x, cy: y, r: NODE_R }));
+
+            if (thumb) {
+                const clip = svgEl("clipPath", { id: `abode-clip-${i}` });
+                clip.appendChild(svgEl("circle", { cx: x, cy: y, r: NODE_R - 3 }));
+                defs.appendChild(clip);
+                g.appendChild(svgEl("image", {
+                    href: thumb, x: x - NODE_R, y: y - NODE_R, width: NODE_R * 2, height: NODE_R * 2,
+                    preserveAspectRatio: "xMidYMid slice", "clip-path": `url(#abode-clip-${i})`
+                }));
+                // маленький номер в углу узла
+                const bx = x + NODE_R * 0.72, by = y + NODE_R * 0.72;
+                g.appendChild(svgEl("circle", { class: "ring-badge", cx: bx, cy: by, r: 11 }));
+                const bt = svgEl("text", { class: "ring-badge-num", x: bx, y: by + 4 });
+                bt.textContent = num;
+                g.appendChild(bt);
+            } else {
+                const t = svgEl("text", { class: "ring-num", x, y: y + 7 });
+                t.textContent = num;
+                g.appendChild(t);
+            }
+
+            g.addEventListener("click", () => select(i));
+            g.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(i); }
+            });
+            ring.appendChild(g);
+            nodes.push(g);
+
+            //кнопка для сетки на телефоне
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "abode-chip";
+            if (a.color) chip.style.setProperty("--node-color", a.color);
+            chip.innerHTML = `
+        ${thumb ? `<img src="${esc(thumb)}" alt="">` : `<span class="abode-chip-num">${esc(num)}</span>`}
+        <span class="abode-chip-name">${esc(a.name || `Обитель ${num}`)}</span>
+      `;
+            chip.addEventListener("click", () => select(i));
+            grid.appendChild(chip);
+            chips.push(chip);
+        });
+
+        // ---------- карточка ----------
+        const card = document.getElementById("abodeCard");
+        let current = -1;
+
+        function renderCard(i) {
+            const a = abodes[i];
+            const num = numOf(a, i);
+            const members = membersOf(a);
+
+            if (a.color) card.style.setProperty("--abode-color", a.color);
+            else card.style.removeProperty("--abode-color");
+
+            document.getElementById("abodeImg").innerHTML = a.image
+                ? `<img src="${esc(a.image)}" alt="${esc(a.name)}">`
+                : `<div class="abode-img-empty">${esc(num)}</div>`;
+
+            document.getElementById("abodeLabel").textContent = `Обитель ${num}`;
+            document.getElementById("abodeName").textContent = a.name || `Обитель ${num}`;
+
+            const rulerEl = document.getElementById("abodeRuler");
+            rulerEl.textContent = a.ruler ? `${RULER_LABEL}: ${a.ruler}` : "";
+            rulerEl.style.display = a.ruler ? "block" : "none";
+
+            document.getElementById("abodeDesc").textContent = a.description || "Описание скоро появится...";
+
+            document.getElementById("abodeCharsTitle").textContent =
+                members.length ? `Персонажи обители · ${members.length}` : "Персонажи обители";
+
+            document.getElementById("abodeChars").innerHTML = members.length === 0
+                ? `<p class="loading-text" style="grid-column:1/-1;margin:0">Пока никого нет</p>`
+                : members.map((c) => `
+          <a href="character.html?id=${c.id}" class="abode-char">
+            <div class="abode-char-img">${c.portrait ? `<img src="${esc(c.portrait)}" alt="${esc(c.name)}">` : ""}</div>
+            <div class="abode-char-info">
+              <div class="abode-char-name">${esc(c.name)}</div>
+              ${c.role ? `<div class="abode-char-role">${esc(c.role)}</div>` : ""}
+            </div>
+          </a>
+        `).join("");
+
+            card.classList.remove("swap");
+            void card.offsetWidth;
+            card.classList.add("swap");
+        }
+
+        function select(i) {
+            if (i < 0 || i >= abodes.length || i === current) return;
+            current = i;
+            nodes.forEach((n, k) => n.classList.toggle("active", k === i));
+            chips.forEach((c, k) => c.classList.toggle("active", k === i));
+            renderCard(i);
+
+            //ссылка запоминает выбранную обитель
+            const url = new URL(window.location.href);
+            url.searchParams.set("abode", numOf(abodes[i], i));
+            history.replaceState(null, "", url);
+        }
+
+        //стрелки на клавиатуре
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight" || e.key === "ArrowDown") select((current + 1) % abodes.length);
+            if (e.key === "ArrowLeft" || e.key === "ArrowUp") select((current - 1 + abodes.length) % abodes.length);
+        });
+
+        // стартовая обитель: ?abode=5 (по номеру) или первая
+        const wanted = params.get("abode");
+        let startIdx = abodes.findIndex((a, i) => String(numOf(a, i)) === wanted || a.id === wanted);
+        if (startIdx < 0) startIdx = 0;
+        select(startIdx);
+    }
+
+    // ====== УВЕДОМЛЕНИЯ ======
+    function loadNotifications(userId) {
+        const q = query(
+            collection(db, "notifications"),
+            where("userId", "==", userId),
+            where("read", "==", false)
+        );
+
+        onSnapshot(q, (snap) => {
+            const countEl = document.getElementById("notifCount");
+            if (countEl) {
+                if (snap.size > 0) {
+                    countEl.textContent = snap.size;
+                    countEl.style.display = "inline";
+                } else {
+                    countEl.style.display = "none";
+                }
+            }
+            const bell = document.getElementById("notifBell");
+            if (bell) bell.onclick = () => showNotifications(snap.docs, userId);
+        });
+    }
+
+    function showNotifications(docs, userId) {
+        const existing = document.getElementById("notifDropdown");
+        if (existing) { existing.remove(); return; }
+
+        const dropdown = document.createElement("div");
+        dropdown.id = "notifDropdown";
+        dropdown.className = "notif-dropdown";
+
+        if (docs.length === 0) {
+            dropdown.innerHTML = `<p class="loading-text" style="padding:16px">Уведомлений нет</p>`;
+        } else {
+            docs.forEach((d) => {
+                const n = d.data();
+                const date = n.createdAt?.toDate?.()?.toLocaleDateString("ru-RU") || "";
+                dropdown.innerHTML += `
+          <a href="${n.link}" class="notif-item" data-id="${d.id}">
+            <div class="notif-text">${n.text}</div>
+            <div class="notif-date">${date}</div>
+          </a>
+        `;
+            });
+            dropdown.innerHTML += `<button class="notif-clear" id="notifClear">Отметить все прочитанными</button>`;
+        }
+
+        document.getElementById("notifBell").after(dropdown);
+
+        dropdown.querySelectorAll(".notif-item").forEach((item) => {
+            item.addEventListener("click", async () => {
+                await updateDoc(doc(db, "notifications", item.dataset.id), { read: true });
+            });
+        });
+
+        document.getElementById("notifClear")?.addEventListener("click", async () => {
+            await Promise.all(docs.map((d) => updateDoc(doc(db, "notifications", d.id), { read: true })));
+            dropdown.remove();
+            document.getElementById("notifCount").style.display = "none";
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!dropdown.contains(e.target) && e.target.id !== "notifBell") dropdown.remove();
+        }, { once: true });
+    }
+
+    // ====== ШАПКА: вход / профиль ======
+    onAuthStateChanged(auth, async (user) => {
+        const authButtons = document.getElementById("authButtons");
+        if (user) {
+            const isAdmin = user.email === ADMIN_EMAIL;
+
+            authButtons.innerHTML = `
+        ${isAdmin ? '<a href="admin.html" class="nav-btn admin-btn">Админ</a>' : ""}
+        <button class="notif-bell" id="notifBell">🔔 <span class="notif-count" id="notifCount" style="display:none">0</span></button>
+        <a href="profile.html" class="nav-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted)">Профиль</a>
+        <button class="nav-btn logout-btn" id="logoutBtn">Выйти</button>
+      `;
+            document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+                await signOut(auth);
+                window.location.reload();
+            });
+
+            loadNotifications(user.uid);
+
+            //проверка бана
+            onSnapshot(doc(db, "users", user.uid), async (snap) => {
+                if (snap.exists() && snap.data().blocked) {
+                    await signOut(auth);
+                    window.location.href = "login.html";
+                }
+            });
+        } else {
+            authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;
+        }
+    });
+
+    init().catch((err) => {
+        console.error(err);
+        const status = document.getElementById("abodesStatus");
+        status.style.display = "block";
+        status.textContent = "Не удалось загрузить обители. Попробуй обновить страницу.";
+    });
+</script>
+</body>
+</html>
