@@ -1055,7 +1055,6 @@
         document.getElementById("secretSubmit").addEventListener("click", async () => {
             const code = document.getElementById("secretInput").value.trim();
             if (!code) return;
-            // "/" нельзя в ID документа, "." и ".." тоже
             if (code.includes("/") || code === "." || code === "..") {
                 document.getElementById("secretErr").textContent = "Неверный код";
                 return;

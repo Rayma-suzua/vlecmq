@@ -302,7 +302,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, where, deleteDoc, doc, getDoc, updateDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, setDoc, getDocs, where, deleteDoc, doc, getDoc, updateDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDoRa8vf2rjzgRG4nhf46Ps0rfsy7Vkj14",
@@ -1472,37 +1472,64 @@
   async function loadSecretsList() {
     const list = document.getElementById("secretsList");
     list.innerHTML = `<p class="loading-text">Загрузка...</p>`;
-    const snapshot = await getDocs(collection(db, "secret_pages"));
+    const [snapshot, codesSnap] = await Promise.all([
+      getDocs(collection(db, "secret_pages")),
+      getDocs(collection(db, "secret_codes"))
+    ]);
     if (snapshot.empty) {
       list.innerHTML = `<p class="loading-text">Секретных страниц пока нет</p>`;
       return;
     }
+
+    const secretByCode = new Map();
+    const codeBySecret = new Map();
+    codesSnap.forEach(c => {
+      secretByCode.set(c.id, c.data().secretId);
+      codeBySecret.set(c.data().secretId, c.id);
+    });
+
+    const syncs = [];
+    snapshot.forEach(d => {
+      const code = d.data().code;
+      if (code && !secretByCode.has(code) && !code.includes("/")) {
+        syncs.push(setDoc(doc(db, "secret_codes", code), { secretId: d.id }));
+        codeBySecret.set(d.id, code);
+      }
+    });
+    try { await Promise.all(syncs); } catch (e) { console.error("sync codes:", e); }
+
     list.innerHTML = "";
     snapshot.forEach(d => {
       const s = d.data();
+      const code = s.code || codeBySecret.get(d.id) || "";
       list.innerHTML += `
             <div class="admin-work-item" id="secret-${d.id}">
                 <div style="flex:1">
-                    <div class="admin-work-name">${s.title}</div>
-                    <div class="admin-work-desc">Код: <span style="color:var(--accent)">${s.code}</span></div>
+                    <div class="admin-work-name">${escHtml(s.title)}</div>
+                    <div class="admin-work-desc">Код: <span style="color:var(--accent)">${escHtml(code) || "—"}</span></div>
                 </div>
-                <a href="secret.html?code=${s.code}" target="_blank" class="nav-btn" style="margin-right:8px">Открыть</a>
-                <button class="edit-secret-btn nav-btn" data-id="${d.id}" style="margin-right:8px">Редактировать</button>
-                <button class="delete-btn delete-secret-btn" data-id="${d.id}">Удалить</button>
+                ${code ? `<a href="secret.html?code=${encodeURIComponent(code)}" target="_blank" class="nav-btn" style="margin-right:8px">Открыть</a>` : ""}
+                <button class="edit-secret-btn nav-btn" data-id="${d.id}" data-code="${escHtml(code)}" style="margin-right:8px">Редактировать</button>
+                <button class="delete-btn delete-secret-btn" data-id="${d.id}" data-code="${escHtml(code)}">Удалить</button>
             </div>
         `;
     });
+
     document.querySelectorAll(".delete-secret-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-id");
-        if (!confirm("Удалить секретную страницу?")) return;
+        const code = btn.getAttribute("data-code");
+        if (!confirm("Удалить секретную страницу? Её страницы и разделы останутся в базе.")) return;
         await deleteDoc(doc(db, "secret_pages", id));
+        if (code) await deleteDoc(doc(db, "secret_codes", code));
         document.getElementById(`secret-${id}`).remove();
       });
     });
+
     document.querySelectorAll(".edit-secret-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-id");
+        const code = btn.getAttribute("data-code");
         const secretDoc = await getDoc(doc(db, "secret_pages", id));
         if (!secretDoc.exists()) return;
         const s = secretDoc.data();
@@ -1510,23 +1537,16 @@
         document.querySelectorAll(".sidebar-btn").forEach(b => b.classList.remove("active"));
         document.getElementById("sectionNewSecret").style.display = "block";
         document.getElementById("secretTitle").value = s.title || "";
-        document.getElementById("secretCode").value = s.code || "";
+        document.getElementById("secretCode").value = code || "";
         secretQuill.root.innerHTML = s.content || "";
         const saveBtn = document.getElementById("saveSecretBtn");
         saveBtn.textContent = "Обновить";
         saveBtn.dataset.editId = id;
+        saveBtn.dataset.oldCode = code || "";
       });
     });
   }
 
-  document.querySelectorAll(".delete-secret-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-id");
-      if (!confirm("Удалить секретную страницу?")) return;
-      await deleteDoc(doc(db, "secret_pages", id));
-      document.getElementById(`secret-${id}`).remove();
-    });
-  });
   //-сохранить секретную страницу-
   document.getElementById("saveSecretBtn").addEventListener("click", async () => {
     const title = document.getElementById("secretTitle").value.trim();
@@ -1536,10 +1556,20 @@
     const errorEl = document.getElementById("secretError");
     const saveBtn = document.getElementById("saveSecretBtn");
     const editId = saveBtn.dataset.editId;
+    const oldCode = saveBtn.dataset.oldCode || "";
 
+    errorEl.style.color = "var(--error)";
     if (!title || !code) { errorEl.textContent = "Заполни название и код"; return; }
+    if (code.includes("/") || code === "." || code === "..") {
+      errorEl.textContent = "В коде нельзя использовать / и точки-одиночки"; return;
+    }
 
     try {
+      const taken = await getDoc(doc(db, "secret_codes", code));
+      if (taken.exists() && taken.data().secretId !== editId) {
+        errorEl.textContent = "Такой код уже занят"; return;
+      }
+
       errorEl.style.color = "var(--text-muted)";
       errorEl.textContent = "Сохраняем...";
       let coverUrl = "";
@@ -1549,15 +1579,19 @@
         const updateData = { title, code, content };
         if (coverUrl) updateData.cover = coverUrl;
         await updateDoc(doc(db, "secret_pages", editId), updateData);
+        if (oldCode && oldCode !== code) await deleteDoc(doc(db, "secret_codes", oldCode));
+        await setDoc(doc(db, "secret_codes", code), { secretId: editId });
         errorEl.style.color = "#4caf50";
         errorEl.textContent = "Обновлено!";
         saveBtn.textContent = "Сохранить";
         delete saveBtn.dataset.editId;
+        delete saveBtn.dataset.oldCode;
       } else {
-        await addDoc(collection(db, "secret_pages"), {
+        const ref = await addDoc(collection(db, "secret_pages"), {
           title, code, content, cover: coverUrl,
           createdAt: serverTimestamp()
         });
+        await setDoc(doc(db, "secret_codes", code), { secretId: ref.id });
         errorEl.style.color = "#4caf50";
         errorEl.textContent = "Секретная страница создана!";
       }

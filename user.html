@@ -86,11 +86,12 @@
     messagingSenderId: "730050177884",
     appId: "1:730050177884:web:d4c7c17614b6aa51c96f99"
   };
-
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+
   const ADMIN_UID = "9jPX9LEJz5dlbHe2sUbXO4SfzJ02";
+  let isAdmin = false;
 
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("id");
@@ -215,17 +216,8 @@
         reviewed: false
       });
 
-      const adminSnap = await getDocs(query(
-              collection(db, "users"),
-              where("role", "==", "admin")
-      ));
-
-      const allUsers = await getDocs(collection(db, "users"));
-      allUsers.forEach(async d => {
-      });
-
       await addDoc(collection(db, "notifications"), {
-        userId: "loxb7MFyeiS2ccJ7FX7wFDS2NhS2",
+        userId: ADMIN_UID,
         type: "report",
         text: `Жалоба на ${userData.name || "пользователя"}: ${reason}`,
         link: `user.html?id=${userId}`,

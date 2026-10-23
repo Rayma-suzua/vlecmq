@@ -82,6 +82,7 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
   const ADMIN_UID = "9jPX9LEJz5dlbHe2sUbXO4SfzJ02";
+  let isAdmin = false;
 
   async function uploadFile(file) {
     const formData = new FormData();
