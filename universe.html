@@ -132,9 +132,16 @@
     document.getElementById("universeHero").style.backgroundImage = `url('${universe.cover}')`;
   }
 
-  // пункт «Обители»: виден только если у вселенной есть обители
+  const abodeTagKeys = new Set();
+
+  //обители
   try {
     const abodesSnap = await getDocs(query(collection(db, "abodes"), where("universeId", "==", universeId)));
+    abodesSnap.forEach(d => {
+      const a = d.data();
+      const key = String(a.tag || a.name || "").trim().toLowerCase();
+      if (key) abodeTagKeys.add(key);
+    });
     if (!abodesSnap.empty) {
       const abodesTab = document.getElementById("abodesTab");
       abodesTab.style.display = "";
@@ -203,7 +210,9 @@
     chars.sort((a, b) => a.name.localeCompare(b.name));
 
     const allTags = new Set();
-    chars.forEach(c => (c.tags || []).forEach(t => allTags.add(t)));
+    chars.forEach(c => (c.tags || []).forEach(t => {
+      if (!abodeTagKeys.has(String(t).trim().toLowerCase())) allTags.add(t);
+    }));
 
     const regularTags = [...allTags].filter(t => !workNamesSet.has(t.toLowerCase())).sort((a, b) => a.localeCompare(b, "ru"));
     const workTags = [...allTags].filter(t => workNamesSet.has(t.toLowerCase())).sort((a, b) => a.localeCompare(b, "ru"));
@@ -335,13 +344,21 @@
   });
 
   //переключение вкладок законов
+  function activateTab(name) {
+    const tab = document.querySelector(`.universe-tab[data-tab="${name}"]`);
+    const content = document.getElementById(`tab-${name}`);
+    if (!tab || !content) return;
+    document.querySelectorAll(".universe-tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    tab.classList.add("active");
+    content.classList.add("active");
+    if (name === "laws") loadLaws();
+  }
+
   document.querySelectorAll(".universe-tab[data-tab]").forEach(tab => {
     tab.addEventListener("click", () => {
-      document.querySelectorAll(".universe-tab").forEach(t => t.classList.remove("active"));
-      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-      tab.classList.add("active");
-      document.getElementById(`tab-${tab.dataset.tab}`).classList.add("active");
-      if (tab.dataset.tab === "laws") loadLaws();
+      activateTab(tab.dataset.tab);
+      history.replaceState(null, "", `${location.pathname}${location.search}#${tab.dataset.tab}`);
     });
   });
 
@@ -711,6 +728,9 @@
       authButtons.innerHTML = `<a href="login.html" class="nav-btn">Войти</a>`;
     }
   });
+
+  const startTab = location.hash.slice(1);
+  if (startTab) activateTab(startTab);
 
   // а ты хуле палишь
 </script>
